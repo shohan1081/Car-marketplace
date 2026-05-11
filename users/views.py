@@ -102,10 +102,22 @@ class BusinessInformationView(APIView):
         if not request.user.is_dealer:
             return Response({"error": "Only dealers can set business information."}, status=status.HTTP_403_FORBIDDEN)
         
-        serializer = BusinessInformationSerializer(data=request.data)
+        try:
+            info = request.user.business_info
+            if info.verification_status == 'verified':
+                return Response({"error": "Verified accounts cannot modify business information directly. Please contact support."}, status=status.HTTP_400_BAD_REQUEST)
+            
+            serializer = BusinessInformationSerializer(info, data=request.data, partial=True)
+        except BusinessInformation.DoesNotExist:
+            serializer = BusinessInformationSerializer(data=request.data)
+
         if serializer.is_valid():
-            serializer.save(user=request.user)
-            return Response({"message": "Business information saved successfully."}, status=status.HTTP_201_CREATED)
+            # When updating or creating, set status back to pending
+            business_info = serializer.save(user=request.user, verification_status='pending', rejection_reason=None)
+            return Response({
+                "message": "Business information submitted for verification.",
+                "status": business_info.verification_status
+            }, status=status.HTTP_201_CREATED if not hasattr(request.user, 'business_info') else status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def get(self, request):
