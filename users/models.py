@@ -74,6 +74,11 @@ class UserPreference(models.Model):
         return f"Preferences for {self.user.email}"
 
 class BusinessInformation(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('verified', 'Verified'),
+        ('rejected', 'Rejected'),
+    ]
     SPECIALIZATION_CHOICES = [
         ('new_cars', 'New Cars'),
         ('used_cars', 'Used Cars'),
@@ -84,6 +89,9 @@ class BusinessInformation(models.Model):
     ]
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='business_info')
+    verification_status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    rejection_reason = models.TextField(blank=True, null=True)
+    
     dealership_name = models.CharField(max_length=255)
     display_name = models.CharField(max_length=255)
     specialization = models.JSONField(default=list)
