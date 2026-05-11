@@ -78,7 +78,8 @@ class BusinessInformationSerializer(serializers.ModelSerializer):
     class Meta:
         model = BusinessInformation
         fields = '__all__'
-        read_only_fields = ['user']
+        read_only_fields = ['user', 'verification_status', 'rejection_reason']
+
 
     def validate_specialization(self, value):
         valid_choices = [choice[0] for choice in BusinessInformation.SPECIALIZATION_CHOICES]
