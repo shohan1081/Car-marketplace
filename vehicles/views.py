@@ -1,8 +1,58 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
-from .models import Music, Vehicle
-from .serializers import MusicSerializer, VehicleSerializer
+from .models import Music, Vehicle, DealerVehicleReel, Like, SavedReel
+from .serializers import (
+    MusicSerializer, VehicleSerializer, ReelNewsfeedSerializer, 
+    ReelDetailSerializer
+)
+
+class NewsfeedView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        reels = DealerVehicleReel.objects.all().order_by('-created_at')
+        serializer = ReelNewsfeedSerializer(reels, many=True, context={'request': request})
+        return Response(serializer.data)
+
+class ReelDetailView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request, pk):
+        try:
+            reel = DealerVehicleReel.objects.get(pk=pk)
+            serializer = ReelDetailSerializer(reel, context={'request': request})
+            return Response(serializer.data)
+        except DealerVehicleReel.DoesNotExist:
+            return Response({"error": "Reel not found."}, status=status.HTTP_404_NOT_FOUND)
+
+class LikeReelView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk):
+        try:
+            reel = DealerVehicleReel.objects.get(pk=pk)
+            like, created = Like.objects.get_or_create(user=request.user, reel=reel)
+            if not created:
+                like.delete()
+                return Response({"message": "Unliked successfully."}, status=status.HTTP_200_OK)
+            return Response({"message": "Liked successfully."}, status=status.HTTP_201_CREATED)
+        except DealerVehicleReel.DoesNotExist:
+            return Response({"error": "Reel not found."}, status=status.HTTP_404_NOT_FOUND)
+
+class SaveReelView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk):
+        try:
+            reel = DealerVehicleReel.objects.get(pk=pk)
+            save, created = SavedReel.objects.get_or_create(user=request.user, reel=reel)
+            if not created:
+                save.delete()
+                return Response({"message": "Removed from saved successfully."}, status=status.HTTP_200_OK)
+            return Response({"message": "Saved successfully."}, status=status.HTTP_201_CREATED)
+        except DealerVehicleReel.DoesNotExist:
+            return Response({"error": "Reel not found."}, status=status.HTTP_404_NOT_FOUND)
 
 class MusicListView(APIView):
     permission_classes = [permissions.IsAuthenticated]
