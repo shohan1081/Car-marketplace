@@ -106,6 +106,43 @@ class UserPreferenceSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(f"{value} is not a valid fuel preference.")
         return value
 
+class UserProfileSerializer(serializers.ModelSerializer):
+    preferences = UserPreferenceSerializer(read_only=True)
+    activities = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ['id', 'full_name', 'email', 'profile_photo', 'location', 'preferences', 'activities']
+
+    def get_activities(self, obj):
+        from vehicles.models import Like, SavedReel
+        from vehicles.serializers import ReelNewsfeedSerializer
+        
+        # Get last 5 likes
+        recent_likes = Like.objects.filter(user=obj).order_by('-created_at')[:5]
+        # Get last 5 saves
+        recent_saves = SavedReel.objects.filter(user=obj).order_by('-created_at')[:5]
+        
+        activities = []
+        
+        for like in recent_likes:
+            activities.append({
+                'type': 'like',
+                'created_at': like.created_at,
+                'reel': ReelNewsfeedSerializer(like.reel, context=self.context).data
+            })
+            
+        for save in recent_saves:
+            activities.append({
+                'type': 'save',
+                'created_at': save.created_at,
+                'reel': ReelNewsfeedSerializer(save.reel, context=self.context).data
+            })
+            
+        # Sort combined activities by date
+        activities.sort(key=lambda x: x['created_at'], reverse=True)
+        return activities[:10]
+
 from .models import DealerReview
 
 class DealerReviewSerializer(serializers.ModelSerializer):
