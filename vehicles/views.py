@@ -1,6 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
+from django.db.models import Case, When, Value, IntegerField, Q
 from .models import Music, Vehicle, DealerVehicleReel, Like, SavedReel
 from .serializers import (
     MusicSerializer, VehicleSerializer, ReelNewsfeedSerializer, 
@@ -11,8 +12,37 @@ class NewsfeedView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def get(self, request):
-        reels = DealerVehicleReel.objects.all().order_by('-created_at')
-        serializer = ReelNewsfeedSerializer(reels, many=True, context={'request': request})
+        user = request.user
+        queryset = DealerVehicleReel.objects.all()
+
+        if user.is_authenticated:
+            try:
+                prefs = user.preferences
+                
+                # Initialize score components
+                # 1. Body Type Match (Weight: 3)
+                body_type_q = Q(vehicle__body_type__in=prefs.vehicle_types) if prefs.vehicle_types else Q(pk__isnull=True)
+                
+                # 2. Fuel Preference Match (Weight: 2)
+                fuel_q = Q(vehicle__fuel_type=prefs.fuel_preference) if prefs.fuel_preference else Q(pk__isnull=True)
+                
+                # 3. City Match (Weight: 1)
+                city_q = Q(vehicle__location__icontains=prefs.city) if prefs.city else Q(pk__isnull=True)
+
+                queryset = queryset.annotate(
+                    match_score=(
+                        Case(When(body_type_q, then=Value(3)), default=Value(0), output_field=IntegerField()) +
+                        Case(When(fuel_q, then=Value(2)), default=Value(0), output_field=IntegerField()) +
+                        Case(When(city_q, then=Value(1)), default=Value(0), output_field=IntegerField())
+                    )
+                ).order_by('-match_score', '-created_at')
+            except:
+                # If no preferences found or other error, fallback to normal sorting
+                queryset = queryset.order_by('-created_at')
+        else:
+            queryset = queryset.order_by('-created_at')
+
+        serializer = ReelNewsfeedSerializer(queryset, many=True, context={'request': request})
         return Response(serializer.data)
 
 class ReelDetailView(APIView):
