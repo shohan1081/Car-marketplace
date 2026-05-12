@@ -1,0 +1,258 @@
+{
+	"info": {
+		"_postman_id": "f5849887-8d8a-4c54-9345-d85c5a082b2d",
+		"name": "Video-Based Auto Marketplace API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Users",
+			"item": [
+				{
+					"name": "Buyer Signup",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{"key": "full_name", "value": "John Doe", "type": "text"},
+								{"key": "email", "value": "buyer@example.com", "type": "text"},
+								{"key": "location", "value": "New York", "type": "text"},
+								{"key": "password", "value": "password123", "type": "text"},
+								{"key": "re_enter_password", "value": "password123", "type": "text"},
+								{"key": "profile_photo", "type": "file", "src": ""}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/users/buyer/signup/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "users", "buyer", "signup", ""]
+						}
+					}
+				},
+				{
+					"name": "Dealer Signup",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"full_name\": \"Dealer One\",\n    \"email\": \"dealer@example.com\",\n    \"phone_number\": \"1234567890\",\n    \"designation\": \"Manager\",\n    \"password\": \"password123\",\n    \"re_enter_password\": \"password123\"\n}",
+							"options": {"raw": {"language": "json"}}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/users/dealer/signup/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "users", "dealer", "signup", ""]
+						}
+					}
+				},
+				{
+					"name": "OTP Verify",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"buyer@example.com\",\n    \"code\": \"123456\"\n}",
+							"options": {"raw": {"language": "json"}}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/users/otp-verify/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "users", "otp-verify", ""]
+						}
+					}
+				},
+				{
+					"name": "Login",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"buyer@example.com\",\n    \"password\": \"password123\"\n}",
+							"options": {"raw": {"language": "json"}}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/users/buyer/login/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "users", "buyer", "login", ""]
+						}
+					}
+				},
+				{
+					"name": "Buyer Preferences",
+					"request": {
+						"method": "POST",
+						"header": [
+							{"key": "Authorization", "value": "Token {{token}}", "type": "text"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"vehicle_types\": [\"sedan\", \"suv\"],\n    \"budget_range\": \"20k-40k\",\n    \"fuel_preference\": \"petrol\",\n    \"city\": \"New York\"\n}",
+							"options": {"raw": {"language": "json"}}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/users/buyer/preferences/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "users", "buyer", "preferences", ""]
+						}
+					}
+				},
+				{
+					"name": "Dealer Business Info",
+					"request": {
+						"method": "POST",
+						"header": [
+							{"key": "Authorization", "value": "Token {{token}}", "type": "text"}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{"key": "dealership_name", "value": "Auto World", "type": "text"},
+								{"key": "display_name", "value": "AutoWorld NY", "type": "text"},
+								{"key": "specialization", "value": "[\"new_cars\", \"luxury\"]", "type": "text"},
+								{"key": "street_address", "value": "123 Main St", "type": "text"},
+								{"key": "state", "value": "NY", "type": "text"},
+								{"key": "division", "value": "Manhattan", "type": "text"},
+								{"key": "trade_license_number", "value": "TL12345", "type": "text"},
+								{"key": "dealership_license_number", "value": "DL67890", "type": "text"},
+								{"key": "expiry_date", "value": "2027-12-31", "type": "text"},
+								{"key": "dealership_description", "value": "Best cars in town", "type": "text"},
+								{"key": "dealership_license_document", "type": "file", "src": ""},
+								{"key": "dealership_logo", "type": "file", "src": ""},
+								{"key": "cover_image", "type": "file", "src": ""}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/users/dealer/business-info/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "users", "dealer", "business-info", ""]
+						}
+					}
+				},
+				{
+					"name": "Dealer Profile",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/users/dealer/profile/2/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "users", "dealer", "profile", "2", ""]
+						}
+					}
+				},
+				{
+					"name": "Dealer Review",
+					"request": {
+						"method": "POST",
+						"header": [
+							{"key": "Authorization", "value": "Token {{token}}", "type": "text"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"rating\": 5,\n    \"comment\": \"Excellent service!\"\n}",
+							"options": {"raw": {"language": "json"}}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/users/dealer/profile/2/review/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "users", "dealer", "profile", "2", "review", ""]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Vehicles",
+			"item": [
+				{
+					"name": "Newsfeed",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/vehicles/newsfeed/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "vehicles", "newsfeed", ""]
+						}
+					}
+				},
+				{
+					"name": "Reel Detail",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/vehicles/reels/1/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "vehicles", "reels", "1", ""]
+						}
+					}
+				},
+				{
+					"name": "Create Vehicle",
+					"request": {
+						"method": "POST",
+						"header": [
+							{"key": "Authorization", "value": "Token {{token}}", "type": "text"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Toyota\",\n    \"model\": \"Camry\",\n    \"description\": \"Full option Camry 2024\",\n    \"year\": 2024,\n    \"variant\": \"XLE\",\n    \"body_type\": \"sedan\",\n    \"condition\": \"new\",\n    \"mileage_km\": 0,\n    \"color\": \"White\",\n    \"fuel_type\": \"petrol\",\n    \"transmission\": \"automatic\",\n    \"asking_price\": \"35000.00\",\n    \"negotiable\": true,\n    \"listing_duration\": 30,\n    \"location\": \"NYC\",\n    \"engine_type\": \"V6\",\n    \"displacement\": \"3.5L\",\n    \"power\": \"301 hp\",\n    \"torque\": \"267 lb-ft\",\n    \"fuel_tank\": \"60L\",\n    \"doors\": 4,\n    \"seating\": 5,\n    \"weight\": \"3500 lbs\",\n    \"airbags\": true,\n    \"abs\": true,\n    \"stability_control\": true,\n    \"upholstery\": \"Leather\",\n    \"windows\": \"Power\"\n}",
+							"options": {"raw": {"language": "json"}}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/vehicles/create/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "vehicles", "create", ""]
+						}
+					}
+				},
+				{
+					"name": "Like Reel",
+					"request": {
+						"method": "POST",
+						"header": [
+							{"key": "Authorization", "value": "Token {{token}}", "type": "text"}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/vehicles/reels/1/like/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "vehicles", "reels", "1", "like", ""]
+						}
+					}
+				},
+				{
+					"name": "Share Reel",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/vehicles/reels/1/share/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "vehicles", "reels", "1", "share", ""]
+						}
+					}
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {"type": "text/javascript", "exec": [""]}
+		},
+		{
+			"listen": "test",
+			"script": {"type": "text/javascript", "exec": [""]}
+		}
+	],
+	"variable": [
+		{"key": "base_url", "value": "http://127.0.0.1:8000", "type": "string"},
+		{"key": "token", "value": "your_auth_token_here", "type": "string"}
+	]
+}
