@@ -8,10 +8,11 @@ from django.conf import settings
 from .serializers import (
     BuyerSignupSerializer, DealerSignupSerializer, LoginSerializer, OTPVerifySerializer,
     ForgetPasswordSerializer, ResetPasswordSerializer, UserPreferenceSerializer,
-    BusinessInformationSerializer
+    BusinessInformationSerializer, DealerProfileSerializer, DealerReviewSerializer
 )
-from .models import OTP, UserPreference, BusinessInformation
+from .models import OTP, UserPreference, BusinessInformation, DealerReview
 from rest_framework.authtoken.models import Token
+from django.db.models import Avg
 
 User = get_user_model()
 
@@ -195,3 +196,51 @@ class ResetPasswordView(APIView):
             except User.DoesNotExist:
                 return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class DealerProfileView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request, pk):
+        try:
+            dealer = User.objects.get(pk=pk, is_dealer=True)
+            serializer = DealerProfileSerializer(dealer)
+            return Response(serializer.data)
+        except User.DoesNotExist:
+            return Response({"error": "Dealer not found."}, status=status.HTTP_404_NOT_FOUND)
+
+class DealerReviewView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk):
+        try:
+            dealer = User.objects.get(pk=pk, is_dealer=True)
+            if dealer == request.user:
+                return Response({"error": "You cannot review yourself."}, status=status.HTTP_400_BAD_REQUEST)
+            
+            serializer = DealerReviewSerializer(data=request.data)
+            if serializer.is_valid():
+                review, created = DealerReview.objects.update_or_create(
+                    dealer=dealer,
+                    reviewer=request.user,
+                    defaults={
+                        'rating': serializer.validated_data['rating'],
+                        'comment': serializer.validated_data['comment']
+                    }
+                )
+                
+                # Update Dealer metrics
+                stats = DealerReview.objects.filter(dealer=dealer).aggregate(
+                    avg_rating=Avg('rating'), 
+                    count=models.Count('id')
+                )
+                info = dealer.business_info
+                info.rating = stats['avg_rating']
+                info.review_count = stats['count']
+                info.save()
+
+                return Response({"message": "Review submitted successfully."}, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except User.DoesNotExist:
+            return Response({"error": "Dealer not found."}, status=status.HTTP_404_NOT_FOUND)
+        except BusinessInformation.DoesNotExist:
+             return Response({"error": "Dealer business profile not complete."}, status=status.HTTP_400_BAD_REQUEST)
