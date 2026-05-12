@@ -40,7 +40,10 @@ class VehicleMinimalSerializer(serializers.ModelSerializer):
         fields = ['name', 'year', 'asking_price', 'negotiable', 'mileage_km', 'fuel_type', 'transmission']
 
 class ReelNewsfeedSerializer(serializers.ModelSerializer):
+    dealer_id = serializers.IntegerField(source='dealer.id', read_only=True)
     dealer_name = serializers.CharField(source='dealer.full_name', read_only=True)
+    dealer_rating = serializers.DecimalField(source='dealer.business_info.rating', max_digits=3, decimal_places=2, read_only=True)
+    dealer_reviews = serializers.IntegerField(source='dealer.business_info.review_count', read_only=True)
     vehicle_details = VehicleMinimalSerializer(source='vehicle', read_only=True)
     likes_count = serializers.IntegerField(source='likes.count', read_only=True)
     is_liked = serializers.SerializerMethodField()
@@ -48,7 +51,7 @@ class ReelNewsfeedSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = DealerVehicleReel
-        fields = ['id', 'video_file', 'dealer_name', 'vehicle_details', 'likes_count', 'share_count', 'is_liked', 'is_saved', 'created_at']
+        fields = ['id', 'video_file', 'dealer_id', 'dealer_name', 'dealer_rating', 'dealer_reviews', 'vehicle_details', 'likes_count', 'share_count', 'is_liked', 'is_saved', 'created_at']
 
     def get_is_liked(self, obj):
         user = self.context.get('request').user
