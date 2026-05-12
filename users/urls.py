@@ -2,7 +2,7 @@ from django.urls import path
 from .views import (
     BuyerSignupView, DealerSignupView, LoginView, OTPVerifyView, 
     UserPreferenceView, BusinessInformationView, FirebaseAuthView,
-    ForgetPasswordView, ResetPasswordView
+    ForgetPasswordView, ResetPasswordView, DealerProfileView, DealerReviewView
 )
 
 urlpatterns = [
@@ -21,4 +21,6 @@ urlpatterns = [
     path('reset-password/', ResetPasswordView.as_view(), name='reset-password'),
     path('firebase-auth/', FirebaseAuthView.as_view(), name='firebase-auth'),
     path('buyer/preferences/', UserPreferenceView.as_view(), name='user-preferences'),
+    path('dealer/profile/<int:pk>/', DealerProfileView.as_view(), name='dealer-profile'),
+    path('dealer/profile/<int:pk>/review/', DealerReviewView.as_view(), name='dealer-review'),
 ]
