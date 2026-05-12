@@ -84,6 +84,16 @@ class SaveReelView(APIView):
         except DealerVehicleReel.DoesNotExist:
             return Response({"error": "Reel not found."}, status=status.HTTP_404_NOT_FOUND)
 
+class SavedReelsListView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        saved_reels = SavedReel.objects.filter(user=request.user).order_by('-created_at')
+        # Extract the reel objects from the SavedReel relationships
+        reels = [item.reel for item in saved_reels]
+        serializer = ReelNewsfeedSerializer(reels, many=True, context={'request': request})
+        return Response(serializer.data)
+
 class ShareReelView(APIView):
     permission_classes = [permissions.AllowAny]
 
