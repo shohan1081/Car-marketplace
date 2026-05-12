@@ -91,6 +91,7 @@ class DealerVehicleReel(models.Model):
     vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE, related_name='reels')
     video_file = models.FileField(upload_to='reels/')
     background_music = models.ForeignKey(Music, on_delete=models.SET_NULL, null=True, blank=True)
+    share_count = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
