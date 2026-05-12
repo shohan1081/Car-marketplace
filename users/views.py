@@ -17,21 +17,23 @@ from django.db.models import Avg
 User = get_user_model()
 
 def generate_otp(user):
-    code = str(random.randint(100000, 999999))
+    code = str(random.randint(1000, 9999))
     OTP.objects.create(user=user, code=code)
     
     subject = 'Your OTP Code - Auto Marketplace'
-    message = f'Hello {user.full_name},\n\nYour OTP code for verification is: {code}\n\nThank you!'
-    email_from = settings.EMAIL_HOST_USER
+    message = f'Hello {user.full_name or "User"},\n\nYour OTP code for verification is: {code}\n\nThank you!'
+    email_from = getattr(settings, 'DEFAULT_FROM_EMAIL', settings.EMAIL_HOST_USER)
     recipient_list = [user.email]
     
+    error_msg = None
     try:
         send_mail(subject, message, email_from, recipient_list, fail_silently=False)
     except Exception as e:
-        print(f"Failed to send email: {e}")
+        error_msg = str(e)
+        print(f"Failed to send email to {user.email}: {e}")
         
-    print(f"OTP for {user.email}: {code}") # Keep logging for backup
-    return code
+    print(f"OTP for {user.email}: {code}") 
+    return code, error_msg
 
 class BuyerSignupView(APIView):
     permission_classes = [permissions.AllowAny]
@@ -40,8 +42,11 @@ class BuyerSignupView(APIView):
         serializer = BuyerSignupSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
-            generate_otp(user)
-            return Response({"message": "Signup successful. OTP sent to email."}, status=status.HTTP_201_CREATED)
+            _, email_error = generate_otp(user)
+            response_data = {"message": "Signup successful. OTP sent to email."}
+            if email_error:
+                response_data["email_error"] = f"Technical issue sending email: {email_error}. Please check your SMTP settings."
+            return Response(response_data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class OTPVerifyView(APIView):
@@ -95,8 +100,11 @@ class DealerSignupView(APIView):
         serializer = DealerSignupSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
-            generate_otp(user)
-            return Response({"message": "Dealer signup successful. OTP sent to email."}, status=status.HTTP_201_CREATED)
+            _, email_error = generate_otp(user)
+            response_data = {"message": "Dealer signup successful. OTP sent to email."}
+            if email_error:
+                response_data["email_error"] = f"Technical issue sending email: {email_error}. Please check your SMTP settings in .env."
+            return Response(response_data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class BusinessInformationView(APIView):
