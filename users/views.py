@@ -11,10 +11,17 @@ from .serializers import (
     BusinessInformationSerializer, DealerProfileSerializer, DealerReviewSerializer
 )
 from .models import OTP, UserPreference, BusinessInformation, DealerReview
-from rest_framework.authtoken.models import Token
+from rest_framework_simplejwt.tokens import RefreshToken
 from django.db.models import Avg
 
 User = get_user_model()
+
+def get_tokens_for_user(user):
+    refresh = RefreshToken.for_user(user)
+    return {
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+    }
 
 def generate_otp(user):
     code = str(random.randint(1000, 9999))
@@ -65,8 +72,13 @@ class OTPVerifyView(APIView):
                     otp.save()
                     user.is_verified = True
                     user.save()
-                    token, _ = Token.objects.get_or_create(user=user)
-                    return Response({"message": "OTP verified successfully.", "token": token.key}, status=status.HTTP_200_OK)
+                    
+                    tokens = get_tokens_for_user(user)
+                    return Response({
+                        "message": "OTP verified successfully.", 
+                        "access": tokens['access'],
+                        "refresh": tokens['refresh']
+                    }, status=status.HTTP_200_OK)
                 return Response({"error": "Invalid or expired OTP."}, status=status.HTTP_400_BAD_REQUEST)
             except User.DoesNotExist:
                 return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)
@@ -84,9 +96,11 @@ class LoginView(APIView):
             if user:
                 if not user.is_verified:
                     return Response({"error": "Please verify your email first."}, status=status.HTTP_401_UNAUTHORIZED)
-                token, _ = Token.objects.get_or_create(user=user)
+                
+                tokens = get_tokens_for_user(user)
                 return Response({
-                    "token": token.key, 
+                    "access": tokens['access'],
+                    "refresh": tokens['refresh'],
                     "is_buyer": user.is_buyer,
                     "is_dealer": user.is_dealer
                 }, status=status.HTTP_200_OK)
