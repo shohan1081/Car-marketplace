@@ -8,7 +8,8 @@ from django.conf import settings
 from .serializers import (
     BuyerSignupSerializer, DealerSignupSerializer, LoginSerializer, OTPVerifySerializer,
     ForgetPasswordSerializer, ResetPasswordSerializer, UserPreferenceSerializer,
-    BusinessInformationSerializer, DealerProfileSerializer, DealerReviewSerializer
+    BusinessInformationSerializer, DealerProfileSerializer, DealerReviewSerializer,
+    UserProfileSerializer
 )
 from .models import OTP, UserPreference, BusinessInformation, DealerReview
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -221,6 +222,13 @@ class ResetPasswordView(APIView):
             except User.DoesNotExist:
                 return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class UserProfileView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        serializer = UserProfileSerializer(request.user, context={'request': request})
+        return Response(serializer.data)
 
 class DealerProfileView(APIView):
     permission_classes = [permissions.AllowAny]
