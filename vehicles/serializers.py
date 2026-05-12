@@ -48,7 +48,7 @@ class ReelNewsfeedSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = DealerVehicleReel
-        fields = ['id', 'video_file', 'dealer_name', 'vehicle_details', 'likes_count', 'is_liked', 'is_saved', 'created_at']
+        fields = ['id', 'video_file', 'dealer_name', 'vehicle_details', 'likes_count', 'share_count', 'is_liked', 'is_saved', 'created_at']
 
     def get_is_liked(self, obj):
         user = self.context.get('request').user
