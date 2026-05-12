@@ -78,7 +78,7 @@ class BusinessInformationSerializer(serializers.ModelSerializer):
     class Meta:
         model = BusinessInformation
         fields = '__all__'
-        read_only_fields = ['user', 'verification_status', 'rejection_reason']
+        read_only_fields = ['user', 'verification_status', 'rejection_reason', 'rating', 'review_count']
 
 
     def validate_specialization(self, value):
@@ -105,3 +105,20 @@ class UserPreferenceSerializer(serializers.ModelSerializer):
         if value not in valid_fuels:
             raise serializers.ValidationError(f"{value} is not a valid fuel preference.")
         return value
+
+from .models import DealerReview
+
+class DealerReviewSerializer(serializers.ModelSerializer):
+    reviewer_name = serializers.CharField(source='reviewer.full_name', read_only=True)
+
+    class Meta:
+        model = DealerReview
+        fields = ['id', 'reviewer_name', 'rating', 'comment', 'created_at']
+
+class DealerProfileSerializer(serializers.ModelSerializer):
+    business_info = BusinessInformationSerializer(read_only=True)
+    reviews = DealerReviewSerializer(source='reviews_received', many=True, read_only=True)
+
+    class Meta:
+        model = User
+        fields = ['id', 'full_name', 'email', 'profile_photo', 'business_info', 'reviews']
