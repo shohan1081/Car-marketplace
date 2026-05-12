@@ -2,7 +2,8 @@ from django.urls import path
 from .views import (
     MusicListView, VehicleCreateView, 
     VehiclePreviewView, VehicleDraftPublishView,
-    NewsfeedView, ReelDetailView, LikeReelView, SaveReelView, ShareReelView
+    NewsfeedView, ReelDetailView, LikeReelView, SaveReelView, ShareReelView,
+    SavedReelsListView
 )
 
 urlpatterns = [
@@ -16,5 +17,6 @@ urlpatterns = [
     path('reels/<int:pk>/', ReelDetailView.as_view(), name='reel-detail'),
     path('reels/<int:pk>/like/', LikeReelView.as_view(), name='reel-like'),
     path('reels/<int:pk>/save/', SaveReelView.as_view(), name='reel-save'),
+    path('reels/saved/', SavedReelsListView.as_view(), name='saved-reels-list'),
     path('reels/<int:pk>/share/', ShareReelView.as_view(), name='reel-share'),
 ]
