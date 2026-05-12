@@ -37,14 +37,14 @@ class LoginSerializer(serializers.Serializer):
 
 class OTPVerifySerializer(serializers.Serializer):
     email = serializers.EmailField()
-    code = serializers.CharField(max_length=6)
+    code = serializers.CharField(max_length=4)
 
 class ForgetPasswordSerializer(serializers.Serializer):
     email = serializers.EmailField()
 
 class ResetPasswordSerializer(serializers.Serializer):
     email = serializers.EmailField()
-    code = serializers.CharField(max_length=6)
+    code = serializers.CharField(max_length=4)
     new_password = serializers.CharField(write_only=True)
 
 class DealerSignupSerializer(serializers.ModelSerializer):
