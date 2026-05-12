@@ -19,15 +19,18 @@ User = get_user_model()
 def generate_otp(user):
     code = str(random.randint(100000, 999999))
     OTP.objects.create(user=user, code=code)
-    # In production, use a background task to send email
-    # send_mail(
-    #     'Your OTP Code',
-    #     f'Your OTP code is {code}',
-    #     settings.EMAIL_HOST_USER,
-    #     [user.email],
-    #     fail_silently=False,
-    # )
-    print(f"OTP for {user.email}: {code}") # For development
+    
+    subject = 'Your OTP Code - Auto Marketplace'
+    message = f'Hello {user.full_name},\n\nYour OTP code for verification is: {code}\n\nThank you!'
+    email_from = settings.EMAIL_HOST_USER
+    recipient_list = [user.email]
+    
+    try:
+        send_mail(subject, message, email_from, recipient_list, fail_silently=False)
+    except Exception as e:
+        print(f"Failed to send email: {e}")
+        
+    print(f"OTP for {user.email}: {code}") # Keep logging for backup
     return code
 
 class BuyerSignupView(APIView):
