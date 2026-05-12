@@ -114,5 +114,22 @@ class BusinessInformation(models.Model):
     facebook_url = models.URLField(blank=True, null=True)
     instagram_url = models.URLField(blank=True, null=True)
 
+    # Reputation metrics (can be calculated or cached)
+    rating = models.DecimalField(max_digits=3, decimal_places=2, default=0.0)
+    review_count = models.PositiveIntegerField(default=0)
+
     def __str__(self):
         return self.dealership_name
+
+class DealerReview(models.Model):
+    dealer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reviews_received')
+    reviewer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reviews_given')
+    rating = models.PositiveSmallIntegerField() # 1-5
+    comment = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('dealer', 'reviewer')
+
+    def __str__(self):
+        return f"Review for {self.dealer.email} by {self.reviewer.email}"
