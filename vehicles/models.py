@@ -112,3 +112,37 @@ class SavedReel(models.Model):
 
     class Meta:
         unique_together = ('user', 'reel')
+
+class VehicleInquiry(models.Model):
+    LOAN_TENURE_CHOICES = [
+        (12, '12 Months'),
+        (24, '24 Months'),
+        (36, '36 Months'),
+        (48, '48 Months'),
+        (60, '60 Months'),
+    ]
+    CREDIT_ESTIMATE_CHOICES = [
+        ('good', 'Good'),
+        ('fair', 'Fair'),
+        ('limited', 'Limited'),
+        ('not_sure', 'Not Sure'),
+    ]
+
+    reel = models.ForeignKey(DealerVehicleReel, on_delete=models.CASCADE, related_name='inquiries')
+    buyer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='inquiries')
+    
+    full_name = models.CharField(max_length=255)
+    phone_number = models.CharField(max_length=20)
+    
+    offered_price = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    
+    down_payment = models.DecimalField(max_digits=12, decimal_places=2)
+    loan_tenure = models.IntegerField(choices=LOAN_TENURE_CHOICES)
+    credit_estimate = models.CharField(max_length=20, choices=CREDIT_ESTIMATE_CHOICES)
+    additional_notes = models.TextField(blank=True)
+    agreed_to_share = models.BooleanField(default=False)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Inquiry for {self.reel.vehicle.name} by {self.full_name}"

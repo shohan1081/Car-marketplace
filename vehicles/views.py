@@ -5,8 +5,9 @@ from django.db.models import Case, When, Value, IntegerField, Q
 from .models import Music, Vehicle, DealerVehicleReel, Like, SavedReel
 from .serializers import (
     MusicSerializer, VehicleSerializer, ReelNewsfeedSerializer, 
-    ReelDetailSerializer
+    ReelDetailSerializer, VehicleInquirySerializer
 )
+from messaging.models import Conversation, Message
 
 class NewsfeedView(APIView):
     permission_classes = [permissions.AllowAny]
@@ -155,3 +156,49 @@ class VehicleDraftPublishView(APIView):
             return Response({"message": "Vehicle listing published successfully."}, status=status.HTTP_200_OK)
         except Vehicle.DoesNotExist:
             return Response({"error": "Vehicle not found."}, status=status.HTTP_404_NOT_FOUND)
+
+class VehicleInquiryCreateView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk):
+        try:
+            reel = DealerVehicleReel.objects.get(pk=pk)
+            serializer = VehicleInquirySerializer(data=request.data, context={'reel': reel, 'request': request})
+            if serializer.is_valid():
+                inquiry = serializer.save(buyer=request.user, reel=reel)
+                
+                # Auto-create or get conversation
+                conversation = Conversation.objects.filter(
+                    reel=reel,
+                    participants=request.user
+                ).filter(participants=reel.dealer).first()
+                
+                if not conversation:
+                    conversation = Conversation.objects.create(reel=reel)
+                    conversation.participants.add(request.user, reel.dealer)
+                
+                # Format professional inquiry message
+                price_info = f"Offered Price: {inquiry.offered_price}" if inquiry.offered_price else "Price: Fixed"
+                message_text = (
+                    f"Hi, I'm interested in this {reel.vehicle.name}.\n\n"
+                    f"Inquiry Details:\n"
+                    f"- {price_info}\n"
+                    f"- Down Payment: {inquiry.down_payment}\n"
+                    f"- Loan Tenure: {inquiry.get_loan_tenure_display()}\n"
+                    f"- Credit Estimate: {inquiry.get_credit_estimate_display()}\n"
+                    f"- Notes: {inquiry.additional_notes or 'None'}"
+                )
+                
+                Message.objects.create(
+                    conversation=conversation,
+                    sender=request.user,
+                    text=message_text
+                )
+                
+                return Response({
+                    "message": "Inquiry submitted and dealer notified.",
+                    "conversation_id": conversation.id
+                }, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except DealerVehicleReel.DoesNotExist:
+            return Response({"error": "Reel not found."}, status=status.HTTP_404_NOT_FOUND)

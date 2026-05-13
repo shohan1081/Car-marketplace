@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Music, Vehicle, DealerVehicleReel, Like, SavedReel
+from .models import Music, Vehicle, DealerVehicleReel, Like, SavedReel, VehicleInquiry
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -74,3 +74,22 @@ class ReelDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = DealerVehicleReel
         fields = '__all__'
+
+class VehicleInquirySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = VehicleInquiry
+        fields = '__all__'
+        read_only_fields = ['buyer', 'reel']
+
+    def validate(self, data):
+        reel = self.context.get('reel')
+        if not reel:
+             raise serializers.ValidationError("Reel context is required.")
+             
+        if data.get('offered_price') and not reel.vehicle.negotiable:
+            raise serializers.ValidationError({"offered_price": "This vehicle's price is not negotiable."})
+            
+        if not data.get('agreed_to_share'):
+            raise serializers.ValidationError({"agreed_to_share": "You must agree to share this information."})
+            
+        return data
