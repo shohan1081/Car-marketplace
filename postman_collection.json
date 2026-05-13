@@ -55,7 +55,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"email\": \"buyer@example.com\",\n    \"code\": \"123456\"\n}",
+							"raw": "{\n    \"email\": \"buyer@example.com\",\n    \"code\": \"1234\"\n}",
 							"options": {"raw": {"language": "json"}}
 						},
 						"url": {
@@ -83,11 +83,25 @@
 					}
 				},
 				{
+					"name": "User Profile",
+					"request": {
+						"method": "GET",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{access_token}}", "type": "text"}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/users/profile/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "users", "profile", ""]
+						}
+					}
+				},
+				{
 					"name": "Buyer Preferences",
 					"request": {
 						"method": "POST",
 						"header": [
-							{"key": "Authorization", "value": "Token {{token}}", "type": "text"}
+							{"key": "Authorization", "value": "Bearer {{access_token}}", "type": "text"}
 						],
 						"body": {
 							"mode": "raw",
@@ -106,7 +120,7 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{"key": "Authorization", "value": "Token {{token}}", "type": "text"}
+							{"key": "Authorization", "value": "Bearer {{access_token}}", "type": "text"}
 						],
 						"body": {
 							"mode": "formdata",
@@ -150,7 +164,7 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{"key": "Authorization", "value": "Token {{token}}", "type": "text"}
+							{"key": "Authorization", "value": "Bearer {{access_token}}", "type": "text"}
 						],
 						"body": {
 							"mode": "raw",
@@ -173,7 +187,9 @@
 					"name": "Newsfeed",
 					"request": {
 						"method": "GET",
-						"header": [],
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{access_token}}", "type": "text", "description": "Optional for personalized feed"}
+						],
 						"url": {
 							"raw": "{{base_url}}/api/vehicles/newsfeed/",
 							"host": ["{{base_url}}"],
@@ -198,7 +214,7 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{"key": "Authorization", "value": "Token {{token}}", "type": "text"}
+							{"key": "Authorization", "value": "Bearer {{access_token}}", "type": "text"}
 						],
 						"body": {
 							"mode": "raw",
@@ -217,12 +233,40 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{"key": "Authorization", "value": "Token {{token}}", "type": "text"}
+							{"key": "Authorization", "value": "Bearer {{access_token}}", "type": "text"}
 						],
 						"url": {
 							"raw": "{{base_url}}/api/vehicles/reels/1/like/",
 							"host": ["{{base_url}}"],
 							"path": ["api", "vehicles", "reels", "1", "like", ""]
+						}
+					}
+				},
+				{
+					"name": "Save Reel",
+					"request": {
+						"method": "POST",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{access_token}}", "type": "text"}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/vehicles/reels/1/save/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "vehicles", "reels", "1", "save", ""]
+						}
+					}
+				},
+				{
+					"name": "Saved Reels List",
+					"request": {
+						"method": "GET",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{access_token}}", "type": "text"}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/vehicles/reels/saved/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "vehicles", "reels", "saved", ""]
 						}
 					}
 				},
@@ -235,6 +279,58 @@
 							"raw": "{{base_url}}/api/vehicles/reels/1/share/",
 							"host": ["{{base_url}}"],
 							"path": ["api", "vehicles", "reels", "1", "share", ""]
+						}
+					}
+				},
+				{
+					"name": "Create Inquiry",
+					"request": {
+						"method": "POST",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{access_token}}", "type": "text"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"full_name\": \"John Doe\",\n    \"phone_number\": \"+123456789\",\n    \"offered_price\": \"34000.00\",\n    \"down_payment\": \"5000.00\",\n    \"loan_tenure\": 36,\n    \"credit_estimate\": \"good\",\n    \"additional_notes\": \"Looking for a quick deal.\",\n    \"agreed_to_share\": true\n}",
+							"options": {"raw": {"language": "json"}}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/vehicles/reels/1/inquiry/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "vehicles", "reels", "1", "inquiry", ""]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Messaging",
+			"item": [
+				{
+					"name": "Conversation List",
+					"request": {
+						"method": "GET",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{access_token}}", "type": "text"}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/messaging/conversations/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "messaging", "conversations", ""]
+						}
+					}
+				},
+				{
+					"name": "Message History",
+					"request": {
+						"method": "GET",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{access_token}}", "type": "text"}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/messaging/conversations/1/messages/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "messaging", "conversations", "1", "messages", ""]
 						}
 					}
 				}
@@ -253,6 +349,6 @@
 	],
 	"variable": [
 		{"key": "base_url", "value": "http://127.0.0.1:8000", "type": "string"},
-		{"key": "token", "value": "your_auth_token_here", "type": "string"}
+		{"key": "access_token", "value": "your_jwt_access_token_here", "type": "string"}
 	]
 }
