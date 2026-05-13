@@ -109,10 +109,26 @@ class UserPreferenceSerializer(serializers.ModelSerializer):
 class UserProfileSerializer(serializers.ModelSerializer):
     preferences = UserPreferenceSerializer(read_only=True)
     activities = serializers.SerializerMethodField()
+    saved_reels_count = serializers.SerializerMethodField()
+    unread_messages_count = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ['id', 'full_name', 'email', 'profile_photo', 'location', 'preferences', 'activities']
+        fields = [
+            'id', 'full_name', 'email', 'profile_photo', 'location', 
+            'preferences', 'activities', 'saved_reels_count', 'unread_messages_count'
+        ]
+
+    def get_saved_reels_count(self, obj):
+        from vehicles.models import SavedReel
+        return SavedReel.objects.filter(user=obj).count()
+
+    def get_unread_messages_count(self, obj):
+        from messaging.models import Message
+        return Message.objects.filter(
+            conversation__participants=obj, 
+            is_read=False
+        ).exclude(sender=obj).count()
 
     def get_activities(self, obj):
         from vehicles.models import Like, SavedReel

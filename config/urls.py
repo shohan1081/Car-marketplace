@@ -23,6 +23,7 @@ urlpatterns = [
     path('admin/', admin.py.urls if hasattr(admin, 'py') else admin.site.urls), # standard is admin.site.urls
     path('api/users/', include('users.urls')),
     path('api/vehicles/', include('vehicles.urls')),
+    path('api/messaging/', include('messaging.urls')),
 ]
 
 if settings.DEBUG:

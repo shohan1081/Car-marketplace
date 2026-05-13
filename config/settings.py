@@ -39,6 +39,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
     'unfold',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -48,8 +49,10 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework_simplejwt',
+    'channels',
     'users',
     'vehicles',
+    'messaging',
 ]
 
 AUTH_USER_MODEL = 'users.User'
@@ -86,6 +89,17 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'config.wsgi.application'
+ASGI_APPLICATION = 'config.asgi.application'
+
+# Channel Layer for WebSockets
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [env('REDIS_URL', default='redis://127.0.0.1:6379/1')],
+        },
+    },
+}
 
 
 # Database
