@@ -15,7 +15,13 @@ class DealerVehicleReelSerializer(serializers.ModelSerializer):
         fields = ['id', 'video_file', 'background_music']
 
 class VehicleSerializer(serializers.ModelSerializer):
-    reels = DealerVehicleReelSerializer(many=True, required=False)
+    video_file = serializers.FileField(write_only=True, required=True)
+    background_music = serializers.PrimaryKeyRelatedField(
+        queryset=Music.objects.all(), 
+        required=False, 
+        write_only=True
+    )
+    reels = DealerVehicleReelSerializer(many=True, read_only=True)
 
     class Meta:
         model = Vehicle
@@ -23,10 +29,18 @@ class VehicleSerializer(serializers.ModelSerializer):
         read_only_fields = ['dealer', 'is_draft']
 
     def create(self, validated_data):
-        reels_data = validated_data.pop('reels', [])
+        video_file = validated_data.pop('video_file')
+        background_music = validated_data.pop('background_music', None)
+        
         vehicle = Vehicle.objects.create(**validated_data)
-        for reel_data in reels_data:
-            DealerVehicleReel.objects.create(vehicle=vehicle, dealer=vehicle.dealer, **reel_data)
+        
+        # Create the primary reel for this vehicle automatically
+        DealerVehicleReel.objects.create(
+            vehicle=vehicle,
+            dealer=vehicle.dealer,
+            video_file=video_file,
+            background_music=background_music
+        )
         return vehicle
 
 class DealerMinimalSerializer(serializers.ModelSerializer):
