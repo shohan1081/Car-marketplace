@@ -14,7 +14,12 @@ class NewsfeedView(APIView):
 
     def get(self, request):
         user = request.user
-        queryset = DealerVehicleReel.objects.all()
+        
+        # Only show reels from verified dealers and non-draft vehicles
+        queryset = DealerVehicleReel.objects.filter(
+            vehicle__is_draft=False,
+            dealer__business_info__verification_status='verified'
+        ).distinct()
 
         if user.is_authenticated:
             try:
