@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from .validators import validate_video_duration
 
 class Music(models.Model):
     title = models.CharField(max_length=255)
@@ -10,6 +11,7 @@ class Music(models.Model):
         return self.title
 
 class Vehicle(models.Model):
+    # ... choices ...
     BODY_TYPE_CHOICES = [
         ('sedan', 'Sedan'),
         ('suv', 'SUV'),
@@ -89,7 +91,7 @@ class Vehicle(models.Model):
 class DealerVehicleReel(models.Model):
     dealer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='reels')
     vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE, related_name='reels')
-    video_file = models.FileField(upload_to='reels/')
+    video_file = models.FileField(upload_to='reels/', validators=[validate_video_duration])
     background_music = models.ForeignKey(Music, on_delete=models.SET_NULL, null=True, blank=True)
     share_count = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
