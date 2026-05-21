@@ -84,10 +84,21 @@ class ReelDetailSerializer(serializers.ModelSerializer):
     vehicle = VehicleSerializer(read_only=True)
     likes_count = serializers.IntegerField(source='likes.count', read_only=True)
     saves_count = serializers.IntegerField(source='saves.count', read_only=True)
+    suggested_reels = serializers.SerializerMethodField()
 
     class Meta:
         model = DealerVehicleReel
         fields = '__all__'
+
+    def get_suggested_reels(self, obj):
+        # Get other reels from the same dealer, excluding the current one
+        # Limit to 5 suggestions
+        other_reels = DealerVehicleReel.objects.filter(
+            dealer=obj.dealer,
+            vehicle__is_draft=False
+        ).exclude(id=obj.id).order_by('-created_at')[:5]
+        
+        return ReelNewsfeedSerializer(other_reels, many=True, context=self.context).data
 
 class VehicleInquirySerializer(serializers.ModelSerializer):
     class Meta:
