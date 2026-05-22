@@ -111,13 +111,23 @@ class UserProfileSerializer(serializers.ModelSerializer):
     activities = serializers.SerializerMethodField()
     saved_reels_count = serializers.SerializerMethodField()
     unread_messages_count = serializers.SerializerMethodField()
+    verification_status = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = [
             'id', 'full_name', 'email', 'profile_photo', 'location', 
-            'preferences', 'activities', 'saved_reels_count', 'unread_messages_count'
+            'preferences', 'activities', 'saved_reels_count', 'unread_messages_count',
+            'verification_status', 'is_buyer', 'is_dealer'
         ]
+
+    def get_verification_status(self, obj):
+        if obj.is_dealer:
+            try:
+                return obj.business_info.verification_status
+            except BusinessInformation.DoesNotExist:
+                return 'not_submitted'
+        return 'n/a'
 
     def get_saved_reels_count(self, obj):
         from vehicles.models import SavedReel
