@@ -105,3 +105,28 @@ class DirectChatTests(TestCase):
         response = self.client.post('/api/messaging/start-chat/', {'reel_id': 999})
         
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+class GeneralStartChatTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user1 = User.objects.create_user(email='u1@ex.com', password='pw', is_verified=True)
+        self.user2 = User.objects.create_user(email='u2@ex.com', password='pw', is_verified=True)
+
+    def test_start_general_chat_success(self):
+        self.client.force_authenticate(user=self.user1)
+        response = self.client.post('/api/messaging/start-chat-general/', {'user_id': self.user2.id})
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('conversation_id', response.data)
+        
+        conv = Conversation.objects.get(id=response.data['conversation_id'])
+        self.assertIsNone(conv.reel)
+        self.assertTrue(conv.participants.filter(id=self.user1.id).exists())
+        self.assertTrue(conv.participants.filter(id=self.user2.id).exists())
+
+    def test_start_general_chat_reuse(self):
+        self.client.force_authenticate(user=self.user1)
+        res1 = self.client.post('/api/messaging/start-chat-general/', {'user_id': self.user2.id})
+        res2 = self.client.post('/api/messaging/start-chat-general/', {'user_id': self.user2.id})
+        
+        self.assertEqual(res1.data['conversation_id'], res2.data['conversation_id'])
