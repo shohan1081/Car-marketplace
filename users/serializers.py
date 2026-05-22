@@ -175,3 +175,8 @@ class DealerProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'full_name', 'email', 'profile_photo', 'business_info', 'reviews']
+
+class UserSearchSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'full_name', 'email', 'profile_photo', 'is_buyer', 'is_dealer']

@@ -9,11 +9,11 @@ from .serializers import (
     BuyerSignupSerializer, DealerSignupSerializer, LoginSerializer, OTPVerifySerializer,
     ForgetPasswordSerializer, ResetPasswordSerializer, UserPreferenceSerializer,
     BusinessInformationSerializer, DealerProfileSerializer, DealerReviewSerializer,
-    UserProfileSerializer
+    UserProfileSerializer, UserSearchSerializer
 )
 from .models import OTP, UserPreference, BusinessInformation, DealerReview
 from rest_framework_simplejwt.tokens import RefreshToken
-from django.db.models import Avg
+from django.db.models import Avg, Q
 
 User = get_user_model()
 
@@ -295,3 +295,30 @@ class DealerReviewView(APIView):
             return Response({"error": "Dealer not found."}, status=status.HTTP_404_NOT_FOUND)
         except BusinessInformation.DoesNotExist:
              return Response({"error": "Dealer business profile not complete."}, status=status.HTTP_400_BAD_REQUEST)
+
+class UserSearchView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        query = request.query_params.get('q', '')
+        if not query:
+            return Response([])
+
+        # Role-based filtering: 
+        # Buyers search for Dealers, Dealers search for Buyers.
+        if request.user.is_buyer:
+            users = User.objects.filter(is_dealer=True)
+        elif request.user.is_dealer:
+            users = User.objects.filter(is_buyer=True)
+        else:
+            # If user has no specific role (though they should), default to all verified users
+            users = User.objects.filter(is_verified=True)
+
+        # Apply prefix matching on full_name or email
+        users = users.filter(
+            Q(full_name__istartswith=query) | 
+            Q(email__istartswith=query)
+        ).distinct()
+
+        serializer = UserSearchSerializer(users, many=True)
+        return Response(serializer.data)
