@@ -8,6 +8,7 @@ from .serializers import (
     ReelDetailSerializer, VehicleInquirySerializer
 )
 from messaging.models import Conversation, Message
+from users.models import BusinessInformation
 
 class NewsfeedView(APIView):
     permission_classes = [permissions.AllowAny]
@@ -130,6 +131,17 @@ class VehicleCreateView(APIView):
         if not request.user.is_dealer:
             return Response({"error": "Only dealers can post vehicle listings."}, status=status.HTTP_403_FORBIDDEN)
         
+        # Check if dealer is verified
+        try:
+            if request.user.business_info.verification_status != 'verified':
+                return Response({
+                    "error": "Your account is not verified. Please complete your business information and wait for admin approval before posting reels."
+                }, status=status.HTTP_403_FORBIDDEN)
+        except BusinessInformation.DoesNotExist:
+            return Response({
+                "error": "Please complete your business information first."
+            }, status=status.HTTP_403_FORBIDDEN)
+        
         serializer = VehicleSerializer(data=request.data)
         if serializer.is_valid():
             is_draft = request.query_params.get('draft', 'false').lower() == 'true'
@@ -154,6 +166,17 @@ class VehicleDraftPublishView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, pk):
+        # Check if dealer is verified
+        try:
+            if request.user.business_info.verification_status != 'verified':
+                return Response({
+                    "error": "Your account is not verified. Please complete your business information and wait for admin approval before publishing."
+                }, status=status.HTTP_403_FORBIDDEN)
+        except BusinessInformation.DoesNotExist:
+            return Response({
+                "error": "Please complete your business information first."
+            }, status=status.HTTP_403_FORBIDDEN)
+
         try:
             vehicle = Vehicle.objects.get(pk=pk, dealer=request.user)
             vehicle.is_draft = False
