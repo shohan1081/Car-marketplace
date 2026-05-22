@@ -4,6 +4,40 @@ from rest_framework.response import Response
 from .models import Conversation, Message
 from .serializers import ConversationSerializer, MessageSerializer
 from vehicles.models import DealerVehicleReel
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
+class GeneralStartChatView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        user_id = request.data.get('user_id')
+        if not user_id:
+            return Response({"error": "user_id is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            other_user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        if other_user == request.user:
+            return Response({"error": "You cannot start a chat with yourself."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Find or create a conversation between these two participants (with no specific reel)
+        conversation = Conversation.objects.filter(
+            reel__isnull=True,
+            participants=request.user
+        ).filter(participants=other_user).first()
+
+        if not conversation:
+            conversation = Conversation.objects.create()
+            conversation.participants.add(request.user, other_user)
+
+        return Response({
+            "conversation_id": conversation.id,
+            "message": "Conversation ready."
+        }, status=status.HTTP_200_OK)
 
 class StartChatView(APIView):
     permission_classes = [permissions.IsAuthenticated]
