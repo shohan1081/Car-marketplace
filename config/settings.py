@@ -151,6 +151,34 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+UNFOLD = {
+    "SITE_TITLE": "Auto Marketplace Admin",
+    "SITE_HEADER": "Auto Marketplace",
+    "SIDEBAR": {
+        "show_search": True,
+        "show_all_applications": True,
+        "navigation": [
+            {
+                "title": "Navigation",
+                "separator": True,
+                "items": [
+                    {
+                        "title": "Dashboard",
+                        "icon": "dashboard",
+                        "link": "/admin/",
+                    },
+                    {
+                        "title": "Verification Requests",
+                        "icon": "verified_user",
+                        "link": "/admin/users/businessinformation/?verification_status__exact=pending",
+                        "badge": "Pending",
+                    },
+                ],
+            },
+        ],
+    },
+}
+
 # Email Settings
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = env('EMAIL_HOST', default='smtp.gmail.com')
