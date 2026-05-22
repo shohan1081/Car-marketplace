@@ -6,7 +6,10 @@ from .models import Conversation, Message
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.user = self.scope["user"]
+        print(f"Connecting user: {self.user} (Authenticated: {self.user.is_authenticated})")
+        
         if not self.user.is_authenticated:
+            print("Connection rejected: User not authenticated")
             await self.close()
             return
 
@@ -14,10 +17,15 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self.room_group_name = f'chat_{self.conversation_id}'
 
         # Check if user is part of the conversation
-        if not await self.is_participant(self.user, self.conversation_id):
+        is_part = await self.is_participant(self.user, self.conversation_id)
+        print(f"Is participant in conversation {self.conversation_id}: {is_part}")
+        
+        if not is_part:
+            print(f"Connection rejected: User {self.user.email} is not a participant in conversation {self.conversation_id}")
             await self.close()
             return
 
+        print(f"Connection accepted for user {self.user.email} in room {self.room_group_name}")
         await self.channel_layer.group_add(
             self.room_group_name,
             self.channel_name
