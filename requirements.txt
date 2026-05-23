@@ -77,3 +77,5 @@ tzdata==2026.2
 ujson==5.12.1
 urllib3==2.7.0
 zope.interface==8.4
+app-store-server-library==1.6.0
+google-api-python-client==2.163.0
