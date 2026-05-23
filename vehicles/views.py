@@ -142,6 +142,12 @@ class VehicleCreateView(APIView):
                 "error": "Please complete your business information first."
             }, status=status.HTTP_403_FORBIDDEN)
         
+        # Check for active subscription
+        if not hasattr(request.user, 'subscription') or not request.user.subscription.is_valid:
+            return Response({
+                "error": "You need an active subscription to post vehicle listings. Please purchase a plan."
+            }, status=status.HTTP_403_FORBIDDEN)
+        
         serializer = VehicleSerializer(data=request.data)
         if serializer.is_valid():
             is_draft = request.query_params.get('draft', 'false').lower() == 'true'
@@ -175,6 +181,12 @@ class VehicleDraftPublishView(APIView):
         except BusinessInformation.DoesNotExist:
             return Response({
                 "error": "Please complete your business information first."
+            }, status=status.HTTP_403_FORBIDDEN)
+
+        # Check for active subscription
+        if not hasattr(request.user, 'subscription') or not request.user.subscription.is_valid:
+            return Response({
+                "error": "You need an active subscription to publish vehicle listings. Please purchase a plan."
             }, status=status.HTTP_403_FORBIDDEN)
 
         try:
