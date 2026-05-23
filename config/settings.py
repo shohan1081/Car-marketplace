@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'users',
     'vehicles',
     'messaging',
+    'subscriptions',
 ]
 
 AUTH_USER_MODEL = 'users.User'
@@ -226,3 +227,15 @@ SIMPLE_JWT = {
     'SLIDING_TOKEN_LIFETIME': timedelta(minutes=5),
     'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
 }
+
+# In-App Purchase Settings
+# Apple
+APPLE_ISSUER_ID = env('APPLE_ISSUER_ID', default='')
+APPLE_KEY_ID = env('APPLE_KEY_ID', default='')
+APPLE_PRIVATE_KEY = env('APPLE_PRIVATE_KEY', default='').replace('\\n', '\n')
+APPLE_BUNDLE_ID = env('APPLE_BUNDLE_ID', default='com.yourapp.bundle')
+APPLE_ENVIRONMENT = env('APPLE_ENVIRONMENT', default='sandbox') # 'sandbox' or 'production'
+
+# Google
+GOOGLE_PLAY_PACKAGE_NAME = env('GOOGLE_PLAY_PACKAGE_NAME', default='com.yourapp.package')
+GOOGLE_SERVICE_ACCOUNT_JSON = env('GOOGLE_SERVICE_ACCOUNT_JSON', default='') # Path to JSON key file
