@@ -117,9 +117,22 @@ class BusinessInformation(models.Model):
     # Reputation metrics (can be calculated or cached)
     rating = models.DecimalField(max_digits=3, decimal_places=2, default=0.0)
     review_count = models.PositiveIntegerField(default=0)
+    follower_count = models.PositiveIntegerField(default=0)
+    share_count = models.PositiveIntegerField(default=0)
 
     def __str__(self):
         return self.dealership_name
+
+class Follow(models.Model):
+    follower = models.ForeignKey(User, on_delete=models.CASCADE, related_name='following')
+    dealer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='followers')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('follower', 'dealer')
+
+    def __str__(self):
+        return f"{self.follower.email} follows {self.dealer.email}"
 
 class DealerReview(models.Model):
     dealer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reviews_received')
