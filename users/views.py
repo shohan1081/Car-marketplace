@@ -9,11 +9,11 @@ from .serializers import (
     BuyerSignupSerializer, DealerSignupSerializer, LoginSerializer, OTPVerifySerializer,
     ForgetPasswordSerializer, ResetPasswordSerializer, UserPreferenceSerializer,
     BusinessInformationSerializer, DealerProfileSerializer, DealerReviewSerializer,
-    UserProfileSerializer, UserSearchSerializer
+    UserProfileSerializer, UserSearchSerializer, FollowerSerializer
 )
-from .models import OTP, UserPreference, BusinessInformation, DealerReview
+from .models import OTP, UserPreference, BusinessInformation, DealerReview, Follow
 from rest_framework_simplejwt.tokens import RefreshToken
-from django.db.models import Avg, Q
+from django.db.models import Avg, Q, Count
 
 User = get_user_model()
 
@@ -99,11 +99,14 @@ class LoginView(APIView):
                     return Response({"error": "Please verify your email first."}, status=status.HTTP_401_UNAUTHORIZED)
                 
                 tokens = get_tokens_for_user(user)
+                user_details = UserProfileSerializer(user, context={'request': request}).data
+                
                 return Response({
                     "access": tokens['access'],
                     "refresh": tokens['refresh'],
                     "is_buyer": user.is_buyer,
-                    "is_dealer": user.is_dealer
+                    "is_dealer": user.is_dealer,
+                    "user_details": user_details
                 }, status=status.HTTP_200_OK)
             return Response({"error": "Invalid credentials."}, status=status.HTTP_401_UNAUTHORIZED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -254,7 +257,7 @@ class DealerProfileView(APIView):
     def get(self, request, pk):
         try:
             dealer = User.objects.get(pk=pk, is_dealer=True)
-            serializer = DealerProfileSerializer(dealer)
+            serializer = DealerProfileSerializer(dealer, context={'request': request})
             return Response(serializer.data)
         except User.DoesNotExist:
             return Response({"error": "Dealer not found."}, status=status.HTTP_404_NOT_FOUND)
@@ -282,7 +285,7 @@ class DealerReviewView(APIView):
                 # Update Dealer metrics
                 stats = DealerReview.objects.filter(dealer=dealer).aggregate(
                     avg_rating=Avg('rating'), 
-                    count=models.Count('id')
+                    count=Count('id')
                 )
                 info = dealer.business_info
                 info.rating = stats['avg_rating']
@@ -295,6 +298,64 @@ class DealerReviewView(APIView):
             return Response({"error": "Dealer not found."}, status=status.HTTP_404_NOT_FOUND)
         except BusinessInformation.DoesNotExist:
              return Response({"error": "Dealer business profile not complete."}, status=status.HTTP_400_BAD_REQUEST)
+
+class FollowDealerView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk):
+        try:
+            dealer = User.objects.get(pk=pk, is_dealer=True)
+            if dealer == request.user:
+                return Response({"error": "You cannot follow yourself."}, status=status.HTTP_400_BAD_REQUEST)
+            
+            follow, created = Follow.objects.get_or_create(follower=request.user, dealer=dealer)
+            
+            if not created:
+                # Unfollow if already following
+                follow.delete()
+                message = "Unfollowed successfully."
+            else:
+                message = "Followed successfully."
+            
+            # Update follower count
+            info = dealer.business_info
+            info.follower_count = Follow.objects.filter(dealer=dealer).count()
+            info.save()
+            
+            return Response({"message": message}, status=status.HTTP_200_OK)
+        except User.DoesNotExist:
+            return Response({"error": "Dealer not found."}, status=status.HTTP_404_NOT_FOUND)
+        except BusinessInformation.DoesNotExist:
+             return Response({"error": "Dealer business profile not complete."}, status=status.HTTP_400_BAD_REQUEST)
+
+class DealerFollowersListView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        if not request.user.is_dealer:
+            return Response({"error": "Only dealers can see their followers list."}, status=status.HTTP_403_FORBIDDEN)
+        
+        followers = User.objects.filter(following__dealer=request.user)
+        serializer = FollowerSerializer(followers, many=True)
+        return Response(serializer.data)
+
+class DealerProfileShareView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request, pk):
+        try:
+            dealer = User.objects.get(pk=pk, is_dealer=True)
+            info = dealer.business_info
+            info.share_count += 1
+            info.save()
+            return Response({
+                "message": "Share count updated.", 
+                "share_count": info.share_count
+            }, status=status.HTTP_200_OK)
+        except User.DoesNotExist:
+            return Response({"error": "Dealer not found."}, status=status.HTTP_404_NOT_FOUND)
+        except BusinessInformation.DoesNotExist:
+            return Response({"error": "Dealer business profile not complete."}, status=status.HTTP_400_BAD_REQUEST)
 
 class UserSearchView(APIView):
     permission_classes = [permissions.IsAuthenticated]
