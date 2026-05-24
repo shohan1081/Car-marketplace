@@ -116,6 +116,21 @@ class ShareReelView(APIView):
         except DealerVehicleReel.DoesNotExist:
             return Response({"error": "Reel not found."}, status=status.HTTP_404_NOT_FOUND)
 
+class ReelViewCountView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request, pk):
+        try:
+            reel = DealerVehicleReel.objects.get(pk=pk)
+            reel.view_count += 1
+            reel.save()
+            return Response({
+                "message": "View count incremented.",
+                "view_count": reel.view_count
+            }, status=status.HTTP_200_OK)
+        except DealerVehicleReel.DoesNotExist:
+            return Response({"error": "Reel not found."}, status=status.HTTP_404_NOT_FOUND)
+
 class MusicListView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
