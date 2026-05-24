@@ -78,7 +78,7 @@ class BusinessInformationSerializer(serializers.ModelSerializer):
     class Meta:
         model = BusinessInformation
         fields = '__all__'
-        read_only_fields = ['user', 'verification_status', 'rejection_reason', 'rating', 'review_count']
+        read_only_fields = ['user', 'verification_status', 'rejection_reason', 'rating', 'review_count', 'follower_count', 'share_count']
 
 
     def validate_specialization(self, value):
@@ -108,6 +108,8 @@ class UserPreferenceSerializer(serializers.ModelSerializer):
 
 class UserProfileSerializer(serializers.ModelSerializer):
     preferences = UserPreferenceSerializer(read_only=True)
+    business_info = BusinessInformationSerializer(read_only=True)
+    subscription = serializers.SerializerMethodField()
     activities = serializers.SerializerMethodField()
     saved_reels_count = serializers.SerializerMethodField()
     unread_messages_count = serializers.SerializerMethodField()
@@ -116,10 +118,20 @@ class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
-            'id', 'full_name', 'email', 'profile_photo', 'location', 
-            'preferences', 'activities', 'saved_reels_count', 'unread_messages_count',
+            'id', 'full_name', 'email', 'phone_number', 'designation', 'profile_photo', 'location', 
+            'preferences', 'business_info', 'subscription',
+            'activities', 'saved_reels_count', 'unread_messages_count',
             'verification_status', 'is_buyer', 'is_dealer'
         ]
+
+    def get_subscription(self, obj):
+        if not obj.is_dealer:
+            return None
+        from subscriptions.serializers import DealerSubscriptionSerializer
+        try:
+            return DealerSubscriptionSerializer(obj.subscription).data
+        except Exception:
+            return None
 
     def get_verification_status(self, obj):
         if obj.is_dealer:
@@ -178,15 +190,53 @@ class DealerReviewSerializer(serializers.ModelSerializer):
         model = DealerReview
         fields = ['id', 'reviewer_name', 'rating', 'comment', 'created_at']
 
+class PublicBusinessInformationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BusinessInformation
+        fields = [
+            'dealership_name', 'display_name', 'specialization', 
+            'street_address', 'state', 'division', 
+            'business_website', 'dealership_logo', 'cover_image', 
+            'dealership_description', 'operating_hours', 
+            'facebook_url', 'instagram_url', 
+            'rating', 'review_count', 'follower_count', 'share_count', 'verification_status'
+        ]
+
 class DealerProfileSerializer(serializers.ModelSerializer):
-    business_info = BusinessInformationSerializer(read_only=True)
+    business_info = PublicBusinessInformationSerializer(read_only=True)
     reviews = DealerReviewSerializer(source='reviews_received', many=True, read_only=True)
+    is_following = serializers.SerializerMethodField()
+    reels = serializers.SerializerMethodField()
+    share_url = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ['id', 'full_name', 'email', 'profile_photo', 'business_info', 'reviews']
+        fields = ['id', 'full_name', 'email', 'profile_photo', 'business_info', 'reviews', 'is_following', 'reels', 'share_url']
+
+    def get_share_url(self, obj):
+        return f"https://yourapp.com/dealer/{obj.id}" # Placeholder URL
+
+    def get_is_following(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            from .models import Follow
+            return Follow.objects.filter(follower=request.user, dealer=obj).exists()
+        return False
+
+    def get_reels(self, obj):
+        from vehicles.models import DealerVehicleReel
+        from vehicles.serializers import ReelNewsfeedSerializer
+        
+        # Only show published (not draft) reels
+        reels = DealerVehicleReel.objects.filter(dealer=obj, vehicle__is_draft=False).order_by('-created_at')
+        return ReelNewsfeedSerializer(reels, many=True, context=self.context).data
 
 class UserSearchSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'full_name', 'email', 'profile_photo', 'is_buyer', 'is_dealer']
+
+class FollowerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'full_name', 'email', 'profile_photo']
