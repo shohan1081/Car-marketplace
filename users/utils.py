@@ -43,7 +43,7 @@ def send_otp_email(user, otp):
         html_message = render_to_string('emails/otp_email.html', {
             'user': user,
             'otp': otp,
-            'site_name': 'Your App Name',
+            'site_name': 'Auto Marketplace',
         })
         plain_message = strip_tags(html_message)
         send_mail(
@@ -130,7 +130,7 @@ def send_verification_email(user, verification_url):
         html_message = render_to_string('emails/verify_email.html', {
             'user': user,
             'verification_url': verification_url,
-            'site_name': 'Your App Name',
+            'site_name': 'Auto Marketplace',
         })
         
         # Create plain text version
@@ -171,7 +171,7 @@ def send_password_reset_email(user, reset_url):
         html_message = render_to_string('emails/reset_password.html', {
             'user': user,
             'reset_url': reset_url,
-            'site_name': 'Your App Name',
+            'site_name': 'Auto Marketplace',
             'expiry_hours': settings.PASSWORD_RESET_TOKEN_EXPIRY_HOURS,
         })
         
@@ -211,7 +211,7 @@ def send_welcome_email(user):
         # Render HTML email template
         html_message = render_to_string('emails/welcome.html', {
             'user': user,
-            'site_name': 'Your App Name',
+            'site_name': 'Auto Marketplace',
         })
         
         # Create plain text version
@@ -250,7 +250,7 @@ def send_account_deletion_email(user):
         # Render HTML email template
         html_message = render_to_string('emails/account_deleted.html', {
             'user': user,
-            'site_name': 'Your App Name',
+            'site_name': 'Auto Marketplace',
         })
         
         # Create plain text version
