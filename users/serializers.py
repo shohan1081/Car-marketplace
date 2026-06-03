@@ -236,6 +236,9 @@ class UserSearchSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id', 'full_name', 'email', 'profile_photo', 'is_buyer', 'is_dealer']
 
+class DeleteAccountSerializer(serializers.Serializer):
+    password = serializers.CharField(write_only=True)
+
 class FollowerSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
