@@ -231,6 +231,11 @@ class DealerProfileSerializer(serializers.ModelSerializer):
         reels = DealerVehicleReel.objects.filter(dealer=obj, vehicle__is_draft=False).order_by('-created_at')
         return ReelNewsfeedSerializer(reels, many=True, context=self.context).data
 
+class UserProfileUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['full_name', 'profile_photo', 'location']
+
 class UserSearchSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
