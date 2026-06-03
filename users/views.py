@@ -182,11 +182,30 @@ class UserPreferenceView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
-        serializer = UserPreferenceSerializer(data=request.data)
+        try:
+            prefs = request.user.preferences
+            serializer = UserPreferenceSerializer(prefs, data=request.data)
+        except UserPreference.DoesNotExist:
+            serializer = UserPreferenceSerializer(data=request.data)
+
         if serializer.is_valid():
             serializer.save(user=request.user)
             return Response({"message": "Preferences saved successfully."}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def patch(self, request):
+        try:
+            prefs = request.user.preferences
+            serializer = UserPreferenceSerializer(prefs, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response({
+                    "message": "Preferences updated successfully.",
+                    "preferences": serializer.data
+                }, status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except UserPreference.DoesNotExist:
+            return Response({"error": "Preferences not found. Please create them first using POST."}, status=status.HTTP_404_NOT_FOUND)
 
     def get(self, request):
         try:
