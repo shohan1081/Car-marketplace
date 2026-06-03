@@ -9,9 +9,10 @@ from .serializers import (
     BuyerSignupSerializer, DealerSignupSerializer, LoginSerializer, OTPVerifySerializer,
     ForgetPasswordSerializer, ResetPasswordSerializer, UserPreferenceSerializer,
     BusinessInformationSerializer, DealerProfileSerializer, DealerReviewSerializer,
-    UserProfileSerializer, UserSearchSerializer, FollowerSerializer
+    UserProfileSerializer, UserSearchSerializer, FollowerSerializer, DeleteAccountSerializer
 )
 from .models import OTP, UserPreference, BusinessInformation, DealerReview, Follow
+from .utils import send_account_deletion_email
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.db.models import Avg, Q, Count
 
@@ -383,3 +384,27 @@ class UserSearchView(APIView):
 
         serializer = UserSearchSerializer(users, many=True)
         return Response(serializer.data)
+
+class DeleteAccountView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        serializer = DeleteAccountSerializer(data=request.data)
+        if serializer.is_valid():
+            password = serializer.validated_data['password']
+            user = request.user
+            
+            if user.check_password(password):
+                # Send confirmation email before deletion
+                send_account_deletion_email(user)
+                
+                # Delete the user (this will cascade delete related data)
+                user.delete()
+                
+                return Response({
+                    "message": "Account deleted successfully. We're sorry to see you go."
+                }, status=status.HTTP_200_OK)
+            
+            return Response({"error": "Incorrect password."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
