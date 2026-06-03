@@ -9,7 +9,8 @@ from .serializers import (
     BuyerSignupSerializer, DealerSignupSerializer, LoginSerializer, OTPVerifySerializer,
     ForgetPasswordSerializer, ResetPasswordSerializer, UserPreferenceSerializer,
     BusinessInformationSerializer, DealerProfileSerializer, DealerReviewSerializer,
-    UserProfileSerializer, UserSearchSerializer, FollowerSerializer, DeleteAccountSerializer
+    UserProfileSerializer, UserSearchSerializer, FollowerSerializer, DeleteAccountSerializer,
+    UserProfileUpdateSerializer
 )
 from .models import OTP, UserPreference, BusinessInformation, DealerReview, Follow
 from .utils import send_account_deletion_email
@@ -251,6 +252,16 @@ class UserProfileView(APIView):
     def get(self, request):
         serializer = UserProfileSerializer(request.user, context={'request': request})
         return Response(serializer.data)
+
+    def patch(self, request):
+        serializer = UserProfileUpdateSerializer(request.user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "message": "Profile updated successfully.",
+                "user_details": UserProfileSerializer(request.user, context={'request': request}).data
+            }, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class DealerProfileView(APIView):
     permission_classes = [permissions.AllowAny]
