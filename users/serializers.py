@@ -204,14 +204,48 @@ class PublicBusinessInformationSerializer(serializers.ModelSerializer):
 
 class DealerProfileSerializer(serializers.ModelSerializer):
     business_info = PublicBusinessInformationSerializer(read_only=True)
-    reviews = DealerReviewSerializer(source='reviews_received', many=True, read_only=True)
+    reviews = serializers.SerializerMethodField()
+    review_stats = serializers.SerializerMethodField()
     is_following = serializers.SerializerMethodField()
     reels = serializers.SerializerMethodField()
     share_url = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ['id', 'full_name', 'email', 'profile_photo', 'business_info', 'reviews', 'is_following', 'reels', 'share_url']
+        fields = ['id', 'full_name', 'email', 'profile_photo', 'business_info', 'reviews', 'review_stats', 'is_following', 'reels', 'share_url']
+
+    def get_reviews(self, obj):
+        # Return only the 10 most recent reviews
+        reviews = obj.reviews_received.all().order_by('-created_at')[:10]
+        return DealerReviewSerializer(reviews, many=True).data
+
+    def get_review_stats(self, obj):
+        from django.db.models import Count, Avg
+        total_count = obj.reviews_received.count()
+        avg_rating = obj.reviews_received.aggregate(Avg('rating'))['rating__avg'] or 0.0
+
+        # Group by rating to get counts for 1-5 stars
+        rating_counts = obj.reviews_received.values('rating').annotate(count=Count('id'))
+        
+        # Initialize breakdown
+        breakdown = {i: 0 for i in range(1, 6)}
+        for item in rating_counts:
+            breakdown[item['rating']] = item['count']
+
+        # Calculate percentages
+        percentages = {}
+        for star, count in breakdown.items():
+            percentage = (count / total_count * 100) if total_count > 0 else 0
+            percentages[f"{star}_star"] = {
+                "count": count,
+                "percentage": round(percentage, 1)
+            }
+
+        return {
+            "average_rating": round(avg_rating, 1),
+            "total_reviews": total_count,
+            "breakdown": percentages
+        }
 
     def get_share_url(self, obj):
         return f"https://yourapp.com/dealer/{obj.id}" # Placeholder URL
