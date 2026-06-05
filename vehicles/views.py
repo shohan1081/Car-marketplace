@@ -1,14 +1,142 @@
+import json
+from datetime import datetime, timedelta
+from django.utils import timezone
+from django.db.models import Sum, Count, Avg, Case, When, Value, IntegerField, Q
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
-from django.db.models import Case, When, Value, IntegerField, Q
-from .models import Music, Vehicle, DealerVehicleReel, Like, SavedReel
+from .models import Music, Vehicle, DealerVehicleReel, Like, SavedReel, ReelView, VehicleInquiry
 from .serializers import (
     MusicSerializer, VehicleSerializer, ReelNewsfeedSerializer, 
     ReelDetailSerializer, VehicleInquirySerializer
 )
 from messaging.models import Conversation, Message
-from users.models import BusinessInformation
+from users.models import BusinessInformation, Follow
+
+class ReelViewCountView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request, pk):
+        try:
+            reel = DealerVehicleReel.objects.get(pk=pk)
+            reel.view_count += 1
+            reel.save()
+            
+            # Log the view for performance tracking
+            viewer_ip = request.META.get('REMOTE_ADDR')
+            user = request.user if request.user.is_authenticated else None
+            ReelView.objects.create(reel=reel, user=user, viewer_ip=viewer_ip)
+            
+            return Response({
+                "message": "View count incremented.",
+                "view_count": reel.view_count
+            }, status=status.HTTP_200_OK)
+        except DealerVehicleReel.DoesNotExist:
+            return Response({"error": "Reel not found."}, status=status.HTTP_404_NOT_FOUND)
+
+class DealerDashboardView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        if not request.user.is_dealer:
+            return Response({"error": "Only dealers can access the dashboard."}, status=status.HTTP_403_FORBIDDEN)
+
+        user = request.user
+        now = timezone.now()
+        last_month = now - timedelta(days=30)
+
+        # 1. Inventory Stats
+        total_inventory = Vehicle.objects.filter(dealer=user).count()
+        active_reels = DealerVehicleReel.objects.filter(dealer=user, vehicle__is_draft=False).count()
+        draft_listings = Vehicle.objects.filter(dealer=user, is_draft=True).count()
+
+        # 2. Performance Stats (Views)
+        total_views = DealerVehicleReel.objects.filter(dealer=user).aggregate(total=Sum('view_count'))['total'] or 0
+        
+        # New: Views in last 30 days using our new ReelView model
+        last_month_views = ReelView.objects.filter(
+            reel__dealer=user, 
+            created_at__gte=last_month
+        ).count()
+
+        # 3. Engagement Stats
+        total_likes = Like.objects.filter(reel__dealer=user).count()
+        total_followers = Follow.objects.filter(dealer=user).count()
+        total_inquiries = VehicleInquiry.objects.filter(reel__dealer=user).count()
+        last_month_leads = VehicleInquiry.objects.filter(
+            reel__dealer=user, 
+            created_at__gte=last_month
+        ).count()
+
+        # 4. Recent Activity (Combined list)
+        # Recent Likes
+        recent_likes = Like.objects.filter(reel__dealer=user).order_by('-created_at')[:5]
+        # Recent Inquiries
+        recent_inquiries = VehicleInquiry.objects.filter(reel__dealer=user).order_by('-created_at')[:5]
+        
+        activities = []
+        for like in recent_likes:
+            activities.append({
+                "type": "like",
+                "user_name": like.user.full_name or like.user.email,
+                "reel_id": like.reel.id,
+                "vehicle_name": like.reel.vehicle.name,
+                "created_at": like.created_at
+            })
+        
+        for inquiry in recent_inquiries:
+            activities.append({
+                "type": "inquiry",
+                "user_name": inquiry.full_name,
+                "reel_id": inquiry.reel.id,
+                "vehicle_name": inquiry.reel.vehicle.name,
+                "created_at": inquiry.created_at
+            })
+
+        # Sort combined activities by date
+        activities.sort(key=lambda x: x['created_at'], reverse=True)
+
+        dashboard_data = {
+            "inventory": {
+                "total_vehicles": total_inventory,
+                "active_reels": active_reels,
+                "draft_listings": draft_listings,
+            },
+            "performance": {
+                "total_views": total_views,
+                "last_month_views": last_month_views,
+                "total_likes": total_likes,
+                "total_followers": total_followers,
+                "leads_received": total_inquiries,
+                "last_month_leads": last_month_leads
+            },
+            "recent_activity": activities[:10]
+        }
+
+        return Response(dashboard_data)
+
+class DealerInventoryView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        if not request.user.is_dealer:
+            return Response({"error": "Only dealers can access their inventory."}, status=status.HTTP_403_FORBIDDEN)
+        
+        # Get all reels belonging to this dealer
+        # Including those where vehicle is draft or published
+        reels = DealerVehicleReel.objects.filter(dealer=request.user).order_by('-created_at')
+        
+        # We can return them as a single list, or grouped. 
+        # A single list with 'is_draft' property is usually most flexible for Flutter.
+        serializer = ReelNewsfeedSerializer(reels, many=True, context={'request': request})
+        
+        # Add is_draft status to the response for each reel
+        data = serializer.data
+        for i, reel_obj in enumerate(reels):
+            data[i]['is_draft'] = reel_obj.vehicle.is_draft
+            data[i]['vehicle_id'] = reel_obj.vehicle.id # Useful for editing
+
+        return Response(data)
 
 class NewsfeedView(APIView):
     permission_classes = [permissions.AllowAny]
@@ -212,6 +340,36 @@ class VehicleDraftPublishView(APIView):
         except Vehicle.DoesNotExist:
             return Response({"error": "Vehicle not found."}, status=status.HTTP_404_NOT_FOUND)
 
+class VehicleDetailView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, pk):
+        try:
+            vehicle = Vehicle.objects.get(pk=pk, dealer=request.user)
+            serializer = VehicleSerializer(vehicle)
+            return Response(serializer.data)
+        except Vehicle.DoesNotExist:
+            return Response({"error": "Vehicle not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    def patch(self, request, pk):
+        try:
+            vehicle = Vehicle.objects.get(pk=pk, dealer=request.user)
+            serializer = VehicleSerializer(vehicle, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Vehicle.DoesNotExist:
+            return Response({"error": "Vehicle not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    def delete(self, request, pk):
+        try:
+            vehicle = Vehicle.objects.get(pk=pk, dealer=request.user)
+            vehicle.delete()
+            return Response({"message": "Vehicle deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
+        except Vehicle.DoesNotExist:
+            return Response({"error": "Vehicle not found."}, status=status.HTTP_404_NOT_FOUND)
+
 class VehicleInquiryCreateView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -257,5 +415,71 @@ class VehicleInquiryCreateView(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except DealerVehicleReel.DoesNotExist:
             return Response({"error": "Reel not found."}, status=status.HTTP_404_NOT_FOUND)
+
+class DealerInquiryListView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        if not request.user.is_dealer:
+            return Response({"error": "Only dealers can access inquiries."}, status=status.HTTP_403_FORBIDDEN)
+        
+        inquiries = VehicleInquiry.objects.filter(reel__dealer=request.user).order_by('-created_at')
+        serializer = VehicleInquirySerializer(inquiries, many=True)
+        return Response(serializer.data)
+
+class DealerInquiryDetailView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, pk):
+        if not request.user.is_dealer:
+            return Response({"error": "Only dealers can access inquiry details."}, status=status.HTTP_403_FORBIDDEN)
+        
+        try:
+            inquiry = VehicleInquiry.objects.get(pk=pk, reel__dealer=request.user)
+            serializer = VehicleInquirySerializer(inquiry)
+            return Response(serializer.data)
+        except VehicleInquiry.DoesNotExist:
+            return Response({"error": "Inquiry not found."}, status=status.HTTP_404_NOT_FOUND)
+
+class DealerInquiryActionView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk, action):
+        if not request.user.is_dealer:
+            return Response({"error": "Only dealers can perform this action."}, status=status.HTTP_403_FORBIDDEN)
+        
+        if action not in ['accept', 'reject']:
+            return Response({"error": "Invalid action. Use 'accept' or 'reject'."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            inquiry = VehicleInquiry.objects.get(pk=pk, reel__dealer=request.user)
+            inquiry.status = 'accepted' if action == 'accept' else 'rejected'
+            inquiry.save()
+
+            # Find the conversation to send a notification message
+            conversation = Conversation.objects.filter(
+                reel=inquiry.reel,
+                participants=inquiry.buyer
+            ).filter(participants=request.user).first()
+
+            if conversation:
+                status_text = "accepted" if action == "accept" else "declined"
+                notif_message = f"Hello {inquiry.full_name}, I have {status_text} your inquiry for the {inquiry.reel.vehicle.name}. Let's discuss the next steps."
+                if action == 'reject':
+                    notif_message = f"Hello {inquiry.full_name}, I have reviewed your inquiry for the {inquiry.reel.vehicle.name} but I am unable to proceed at this time. Thank you for your interest."
+                
+                Message.objects.create(
+                    conversation=conversation,
+                    sender=request.user,
+                    text=notif_message
+                )
+            
+            return Response({
+                "message": f"Inquiry {action}ed successfully and buyer notified.",
+                "status": inquiry.status
+            })
+        except VehicleInquiry.DoesNotExist:
+            return Response({"error": "Inquiry not found."}, status=status.HTTP_404_NOT_FOUND)
+
 
 
