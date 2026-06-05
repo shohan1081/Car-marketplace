@@ -196,6 +196,7 @@ class PublicBusinessInformationSerializer(serializers.ModelSerializer):
         fields = [
             'dealership_name', 'display_name', 'specialization', 
             'street_address', 'state', 'division', 
+            'latitude', 'longitude',
             'business_website', 'dealership_logo', 'cover_image', 
             'dealership_description', 'operating_hours', 
             'facebook_url', 'instagram_url', 
@@ -269,6 +270,50 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['full_name', 'profile_photo', 'location']
+
+class DealerProfileUpdateSerializer(serializers.ModelSerializer):
+    dealership_name = serializers.CharField(source='business_info.dealership_name', required=False)
+    display_name = serializers.CharField(source='business_info.display_name', required=False)
+    specialization = serializers.JSONField(source='business_info.specialization', required=False)
+    street_address = serializers.CharField(source='business_info.street_address', required=False)
+    state = serializers.CharField(source='business_info.state', required=False)
+    division = serializers.CharField(source='business_info.division', required=False)
+    business_website = serializers.URLField(source='business_info.business_website', required=False)
+    trade_license_number = serializers.CharField(source='business_info.trade_license_number', required=False)
+    dealership_description = serializers.CharField(source='business_info.dealership_description', required=False)
+    operating_hours = serializers.JSONField(source='business_info.operating_hours', required=False)
+    facebook_url = serializers.URLField(source='business_info.facebook_url', required=False)
+    instagram_url = serializers.URLField(source='business_info.instagram_url', required=False)
+    latitude = serializers.DecimalField(source='business_info.latitude', max_digits=9, decimal_places=6, required=False)
+    longitude = serializers.DecimalField(source='business_info.longitude', max_digits=9, decimal_places=6, required=False)
+
+    class Meta:
+        model = User
+        fields = [
+            'full_name', 'phone_number', 'designation', 'profile_photo',
+            'dealership_name', 'display_name', 'specialization',
+            'street_address', 'state', 'division',
+            'business_website', 'trade_license_number', 'dealership_description',
+            'operating_hours', 'facebook_url', 'instagram_url',
+            'latitude', 'longitude'
+        ]
+
+    def update(self, instance, validated_data):
+        business_info_data = validated_data.pop('business_info', {})
+        
+        # Update User fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        # Update or create BusinessInformation fields
+        if business_info_data:
+            business_info, created = BusinessInformation.objects.get_or_create(user=instance)
+            for attr, value in business_info_data.items():
+                setattr(business_info, attr, value)
+            business_info.save()
+            
+        return instance
 
 class UserSearchSerializer(serializers.ModelSerializer):
     class Meta:
