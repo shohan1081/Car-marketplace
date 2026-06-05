@@ -1,16 +1,25 @@
 from django.urls import path
 from .views import (
-    MusicListView, VehicleCreateView, 
-    VehiclePreviewView, VehicleDraftPublishView,
+    MusicListView, VehicleCreateView, VehicleDetailView, DealerDashboardView,
+    DealerInventoryView, VehiclePreviewView, VehicleDraftPublishView,
     NewsfeedView, ReelDetailView, LikeReelView, SaveReelView, ShareReelView,
-    SavedReelsListView, VehicleInquiryCreateView, ReelViewCountView
+    SavedReelsListView, VehicleInquiryCreateView, ReelViewCountView,
+    DealerInquiryListView, DealerInquiryDetailView, DealerInquiryActionView
 )
 
 urlpatterns = [
     path('music/', MusicListView.as_view(), name='music-list'),
+    path('dashboard/', DealerDashboardView.as_view(), name='dealer-dashboard'),
+    path('inventory/', DealerInventoryView.as_view(), name='dealer-inventory'),
     path('create/', VehicleCreateView.as_view(), name='vehicle-create'),
+    path('<int:pk>/', VehicleDetailView.as_view(), name='vehicle-detail'),
     path('preview/', VehiclePreviewView.as_view(), name='vehicle-preview'),
     path('publish/<int:pk>/', VehicleDraftPublishView.as_view(), name='vehicle-publish'),
+    
+    # Dealer Inquiries
+    path('inquiries/', DealerInquiryListView.as_view(), name='dealer-inquiries-list'),
+    path('inquiries/<int:pk>/', DealerInquiryDetailView.as_view(), name='dealer-inquiry-detail'),
+    path('inquiries/<int:pk>/<str:action>/', DealerInquiryActionView.as_view(), name='dealer-inquiry-action'),
     
     # Newsfeed & Interactions
     path('newsfeed/', NewsfeedView.as_view(), name='newsfeed'),
