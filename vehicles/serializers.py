@@ -15,7 +15,7 @@ class DealerVehicleReelSerializer(serializers.ModelSerializer):
         fields = ['id', 'video_file', 'background_music']
 
 class VehicleSerializer(serializers.ModelSerializer):
-    video_file = serializers.FileField(write_only=True, required=True)
+    video_file = serializers.FileField(write_only=True, required=False)
     background_music = serializers.PrimaryKeyRelatedField(
         queryset=Music.objects.all(), 
         required=False, 
@@ -42,6 +42,27 @@ class VehicleSerializer(serializers.ModelSerializer):
             background_music=background_music
         )
         return vehicle
+
+    def update(self, instance, validated_data):
+        video_file = validated_data.pop('video_file', None)
+        background_music = validated_data.pop('background_music', None)
+
+        # Update vehicle fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        # Update the associated reel if video or music is changed
+        if video_file or background_music:
+            reel = instance.reels.first() # Get the primary reel
+            if reel:
+                if video_file:
+                    reel.video_file = video_file
+                if background_music:
+                    reel.background_music = background_music
+                reel.save()
+        
+        return instance
 
 class DealerMinimalSerializer(serializers.ModelSerializer):
     class Meta:
@@ -85,10 +106,37 @@ class ReelDetailSerializer(serializers.ModelSerializer):
     likes_count = serializers.IntegerField(source='likes.count', read_only=True)
     saves_count = serializers.IntegerField(source='saves.count', read_only=True)
     suggested_reels = serializers.SerializerMethodField()
+    location_details = serializers.SerializerMethodField()
 
     class Meta:
         model = DealerVehicleReel
         fields = '__all__'
+
+    def get_location_details(self, obj):
+        vehicle = obj.vehicle
+        dealer_info = None
+        try:
+            dealer_info = obj.dealer.business_info
+        except:
+            pass
+
+        # Priority: 1. Vehicle specific location, 2. Dealer business location
+        lat = vehicle.latitude or (dealer_info.latitude if dealer_info else None)
+        long = vehicle.longitude or (dealer_info.longitude if dealer_info else None)
+        
+        address = vehicle.location # The CharField in Vehicle model
+        if dealer_info and not lat:
+             # If no coordinates on vehicle, maybe use dealer address as fallback
+             pass
+
+        return {
+            "latitude": float(lat) if lat else None,
+            "longitude": float(long) if long else None,
+            "address": address,
+            "city": dealer_info.division if dealer_info else None,
+            "state": dealer_info.state if dealer_info else None,
+            "full_address": f"{dealer_info.street_address}, {dealer_info.state}" if dealer_info else address
+        }
 
     def get_suggested_reels(self, obj):
         # Get other reels from the same dealer, excluding the current one
