@@ -4,7 +4,7 @@ from .views import (
     UserPreferenceView, BusinessInformationView, FirebaseAuthView,
     ForgetPasswordView, ResetPasswordView, DealerProfileView, DealerReviewView,
     UserProfileView, UserSearchView, FollowDealerView, DealerFollowersListView, DealerProfileShareView,
-    DeleteAccountView
+    DeleteAccountView, DealerProfileUpdateView
 )
 
 urlpatterns = [
@@ -17,6 +17,7 @@ urlpatterns = [
     path('dealer/signup/', DealerSignupView.as_view(), name='dealer-signup'),
     path('dealer/login/', LoginView.as_view(), name='dealer-login'),
     path('dealer/business-info/', BusinessInformationView.as_view(), name='business-info'),
+    path('dealer/profile/edit/', DealerProfileUpdateView.as_view(), name='dealer-profile-edit'),
 
     # Shared URLs
     path('otp-verify/', OTPVerifyView.as_view(), name='otp-verify'),
