@@ -59,6 +59,8 @@ class Vehicle(models.Model):
     negotiable = models.BooleanField(default=False)
     listing_duration = models.IntegerField(choices=LISTING_DURATION_CHOICES)
     location = models.CharField(max_length=255)
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
 
     # Technical Specs
     engine_type = models.CharField(max_length=100)
@@ -99,6 +101,15 @@ class DealerVehicleReel(models.Model):
 
     def __str__(self):
         return f"Reel for {self.vehicle.name} by {self.dealer.email}"
+
+class ReelView(models.Model):
+    reel = models.ForeignKey(DealerVehicleReel, on_delete=models.CASCADE, related_name='view_logs')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
+    viewer_ip = models.GenericIPAddressField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"View for {self.reel.id} at {self.created_at}"
 
 class Like(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='likes')
@@ -144,6 +155,15 @@ class VehicleInquiry(models.Model):
     credit_estimate = models.CharField(max_length=20, choices=CREDIT_ESTIMATE_CHOICES)
     additional_notes = models.TextField(blank=True)
     agreed_to_share = models.BooleanField(default=False)
+    status = models.CharField(
+        max_length=20, 
+        choices=[
+            ('pending', 'Pending'),
+            ('accepted', 'Accepted'),
+            ('rejected', 'Rejected'),
+        ], 
+        default='pending'
+    )
     
     created_at = models.DateTimeField(auto_now_add=True)
 
