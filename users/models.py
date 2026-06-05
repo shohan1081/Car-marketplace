@@ -114,6 +114,10 @@ class BusinessInformation(models.Model):
     facebook_url = models.URLField(blank=True, null=True)
     instagram_url = models.URLField(blank=True, null=True)
 
+    # Map Location
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+
     # Reputation metrics (can be calculated or cached)
     rating = models.DecimalField(max_digits=3, decimal_places=2, default=0.0)
     review_count = models.PositiveIntegerField(default=0)
