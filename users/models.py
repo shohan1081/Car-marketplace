@@ -65,10 +65,10 @@ class UserPreference(models.Model):
     ]
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='preferences')
-    vehicle_types = models.JSONField(default=list)
-    budget_range = models.CharField(max_length=100)
-    fuel_preference = models.CharField(max_length=50)
-    city = models.CharField(max_length=100)
+    vehicle_types = models.JSONField(default=list, blank=True, null=True)
+    budget_range = models.CharField(max_length=100, blank=True, null=True)
+    fuel_preference = models.CharField(max_length=50, blank=True, null=True)
+    city = models.CharField(max_length=100, blank=True, null=True)
 
     def __str__(self):
         return f"Preferences for {self.user.email}"
@@ -101,15 +101,15 @@ class BusinessInformation(models.Model):
     division = models.CharField(max_length=100)
     
     business_website = models.URLField(blank=True, null=True)
-    trade_license_number = models.CharField(max_length=100)
-    dealership_license_document = models.ImageField(upload_to='licenses/')
-    dealership_license_number = models.CharField(max_length=100)
-    expiry_date = models.DateField()
+    trade_license_number = models.CharField(max_length=100, blank=True, null=True)
+    dealership_license_document = models.ImageField(upload_to='licenses/', blank=True, null=True)
+    dealership_license_number = models.CharField(max_length=100, blank=True, null=True)
+    expiry_date = models.DateField(blank=True, null=True)
     
-    dealership_logo = models.ImageField(upload_to='dealer_logos/')
-    cover_image = models.ImageField(upload_to='dealer_covers/')
-    dealership_description = models.TextField()
-    operating_hours = models.JSONField(default=dict)
+    dealership_logo = models.ImageField(upload_to='dealer_logos/', blank=True, null=True)
+    cover_image = models.ImageField(upload_to='dealer_covers/', blank=True, null=True)
+    dealership_description = models.TextField(blank=True, null=True)
+    operating_hours = models.JSONField(default=dict, blank=True, null=True)
     
     facebook_url = models.URLField(blank=True, null=True)
     instagram_url = models.URLField(blank=True, null=True)

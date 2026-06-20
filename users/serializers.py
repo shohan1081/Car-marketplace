@@ -82,6 +82,16 @@ class BusinessInformationSerializer(serializers.ModelSerializer):
 
 
     def validate_specialization(self, value):
+        import json
+        if isinstance(value, str):
+            try:
+                value = json.loads(value)
+            except json.JSONDecodeError:
+                pass # let it be a string, though it will fail the list check below
+        
+        if not isinstance(value, list):
+            value = [value]
+
         valid_choices = [choice[0] for choice in BusinessInformation.SPECIALIZATION_CHOICES]
         for s in value:
             if s not in valid_choices:
@@ -101,6 +111,8 @@ class UserPreferenceSerializer(serializers.ModelSerializer):
         return value
 
     def validate_fuel_preference(self, value):
+        if not value:
+            return value
         valid_fuels = [choice[0] for choice in UserPreference.FUEL_CHOICES]
         if value not in valid_fuels:
             raise serializers.ValidationError(f"{value} is not a valid fuel preference.")
