@@ -91,6 +91,7 @@ class BusinessInformation(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='business_info')
     verification_status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     rejection_reason = models.TextField(blank=True, null=True)
+    rejected_fields = models.JSONField(default=list, blank=True, null=True)
     
     dealership_name = models.CharField(max_length=255)
     display_name = models.CharField(max_length=255)

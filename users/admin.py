@@ -3,9 +3,19 @@ from unfold.admin import ModelAdmin
 from .models import User, OTP, UserPreference, BusinessInformation
 
 class BusinessInformationAdmin(ModelAdmin):
-    list_display = ['dealership_name', 'user', 'verification_status']
+    list_display = ['dealership_name', 'user', 'verification_status', 'rejection_reason']
     list_filter = ['verification_status']
     search_fields = ['dealership_name', 'user__email']
+    fields = [
+        'user', 'verification_status', 'rejection_reason', 'rejected_fields',
+        'dealership_name', 'display_name', 'specialization',
+        'street_address', 'state', 'division',
+        'latitude', 'longitude', 'business_website',
+        'trade_license_number', 'dealership_license_document',
+        'dealership_license_number', 'expiry_date',
+        'dealership_logo', 'cover_image', 'dealership_description',
+        'operating_hours', 'facebook_url', 'instagram_url'
+    ]
     actions = ['verify_dealers', 'reject_dealers']
 
     def verify_dealers(self, request, queryset):
