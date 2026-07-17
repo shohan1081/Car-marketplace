@@ -1,4 +1,5 @@
 from django.urls import path
+from rest_framework_simplejwt.views import TokenRefreshView
 from .views import (
     BuyerSignupView, DealerSignupView, LoginView, OTPVerifyView, 
     UserPreferenceView, BusinessInformationView, FirebaseAuthView,
@@ -23,6 +24,7 @@ urlpatterns = [
     path('otp-verify/', OTPVerifyView.as_view(), name='otp-verify'),
     path('forget-password/', ForgetPasswordView.as_view(), name='forget-password'),
     path('reset-password/', ResetPasswordView.as_view(), name='reset-password'),
+    path('token/refresh/', TokenRefreshView.as_view(), name='token-refresh'),
     path('firebase-auth/', FirebaseAuthView.as_view(), name='firebase-auth'),
     path('profile/', UserProfileView.as_view(), name='user-profile'),
     path('buyer/preferences/', UserPreferenceView.as_view(), name='user-preferences'),
