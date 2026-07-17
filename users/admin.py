@@ -35,6 +35,23 @@ class BusinessInformationAdminForm(forms.ModelForm):
         model = BusinessInformation
         fields = '__all__'
 
+    def clean(self):
+        cleaned_data = super().clean()
+        rejected_fields = cleaned_data.get('rejected_fields')
+        rejection_reason = cleaned_data.get('rejection_reason')
+        verification_status = cleaned_data.get('verification_status')
+
+        # Automatically change status to rejected if admin filled out rejection details
+        if (rejected_fields or rejection_reason) and verification_status == 'pending':
+            cleaned_data['verification_status'] = 'rejected'
+
+        # Automatically clear rejection details if status is changed to verified
+        if verification_status == 'verified':
+            cleaned_data['rejection_reason'] = None
+            cleaned_data['rejected_fields'] = []
+
+        return cleaned_data
+
 class BusinessInformationAdmin(ModelAdmin):
     form = BusinessInformationAdminForm
     list_display = ['dealership_name', 'user', 'verification_status', 'rejection_reason']
