@@ -20,7 +20,7 @@ class BuyerSignupSerializer(serializers.ModelSerializer):
         return data
 
     def create(self, validated_data):
-        validated_data.pop('re_enter_password')
+        validated_data.pop('re_enter_password', None)
         user = User.objects.create_user(
             email=validated_data['email'],
             password=validated_data['password'],
@@ -30,6 +30,17 @@ class BuyerSignupSerializer(serializers.ModelSerializer):
             is_buyer=True
         )
         return user
+
+    def update(self, instance, validated_data):
+        validated_data.pop('re_enter_password', None)
+        password = validated_data.pop('password', None)
+        if password:
+            instance.set_password(password)
+        
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        return instance
 
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
@@ -63,7 +74,7 @@ class DealerSignupSerializer(serializers.ModelSerializer):
         return data
 
     def create(self, validated_data):
-        validated_data.pop('re_enter_password')
+        validated_data.pop('re_enter_password', None)
         user = User.objects.create_user(
             email=validated_data['email'],
             password=validated_data['password'],
@@ -73,6 +84,17 @@ class DealerSignupSerializer(serializers.ModelSerializer):
             is_dealer=True
         )
         return user
+
+    def update(self, instance, validated_data):
+        validated_data.pop('re_enter_password', None)
+        password = validated_data.pop('password', None)
+        if password:
+            instance.set_password(password)
+        
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        return instance
 
 class BusinessInformationSerializer(serializers.ModelSerializer):
     class Meta:
