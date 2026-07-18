@@ -233,7 +233,7 @@ class PublicBusinessInformationSerializer(serializers.ModelSerializer):
             'latitude', 'longitude',
             'business_website', 'dealership_logo', 'cover_image', 
             'dealership_description', 'operating_hours', 
-            'facebook_url', 'instagram_url', 
+            'facebook_url', 'instagram_url', 'trade_license_number',
             'rating', 'review_count', 'follower_count', 'share_count', 'verification_status'
         ]
 
@@ -247,7 +247,7 @@ class DealerProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'full_name', 'email', 'profile_photo', 'business_info', 'reviews', 'review_stats', 'is_following', 'reels', 'share_url']
+        fields = ['id', 'full_name', 'email', 'phone_number', 'designation', 'profile_photo', 'business_info', 'reviews', 'review_stats', 'is_following', 'reels', 'share_url']
 
     def get_reviews(self, obj):
         # Return only the 10 most recent reviews
@@ -303,7 +303,7 @@ class DealerProfileSerializer(serializers.ModelSerializer):
 class UserProfileUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['full_name', 'profile_photo', 'location']
+        fields = ['full_name', 'profile_photo', 'location', 'email', 'phone_number']
 
 class DealerProfileUpdateSerializer(serializers.ModelSerializer):
     dealership_name = serializers.CharField(source='business_info.dealership_name', required=False)
