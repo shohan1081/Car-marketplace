@@ -89,3 +89,23 @@ class MessageHistoryView(generics.ListAPIView):
             conversation_id=conversation_id, 
             conversation__participants=self.request.user
         ).order_by('created_at')
+
+class SendMessageView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, conversation_id):
+        text = request.data.get('message')
+        if not text:
+            return Response({"error": "message is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            conversation = Conversation.objects.get(id=conversation_id, participants=request.user)
+            msg = Message.objects.create(
+                conversation=conversation,
+                sender=request.user,
+                text=text
+            )
+            serializer = MessageSerializer(msg)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except Conversation.DoesNotExist:
+            return Response({"error": "Conversation not found."}, status=status.HTTP_404_NOT_FOUND)
