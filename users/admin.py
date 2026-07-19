@@ -57,16 +57,25 @@ class BusinessInformationAdmin(ModelAdmin):
     list_display = ['dealership_name', 'user', 'verification_status', 'rejection_reason']
     list_filter = ['verification_status']
     search_fields = ['dealership_name', 'user__email']
-    fields = [
-        'user', 'verification_status', 'rejection_reason', 'rejected_fields',
-        'dealership_name', 'display_name', 'specialization',
-        'street_address', 'state', 'division',
-        'latitude', 'longitude', 'business_website',
-        'trade_license_number', 'dealership_license_document',
-        'dealership_license_number', 'expiry_date',
-        'dealership_logo', 'cover_image', 'dealership_description',
-        'operating_hours', 'facebook_url', 'instagram_url'
-    ]
+    def get_fieldsets(self, request, obj=None):
+        hide_rejection = obj and obj.verification_status == 'verified'
+        
+        status_fields = ('user', 'verification_status')
+        fieldsets = [('Status', {'fields': status_fields})]
+        
+        if not hide_rejection:
+            fieldsets.append(('Rejection Details', {
+                'fields': ('rejection_reason', 'rejected_fields'),
+                'classes': ('collapse',),
+            }))
+            
+        fieldsets.extend([
+            ('Basic Information', {'fields': ('dealership_name', 'display_name', 'specialization', 'dealership_description')}),
+            ('Location & Contact', {'fields': ('street_address', 'state', 'division', 'latitude', 'longitude', 'business_website', 'facebook_url', 'instagram_url')}),
+            ('License & Verification', {'fields': ('trade_license_number', 'dealership_license_document', 'dealership_license_number', 'expiry_date')}),
+            ('Media & Hours', {'fields': ('dealership_logo', 'cover_image', 'operating_hours')}),
+        ])
+        return tuple(fieldsets)
     actions = ['verify_dealers', 'reject_dealers']
 
     def verify_dealers(self, request, queryset):
@@ -85,8 +94,34 @@ from unfold.admin import StackedInline
 
 class BusinessInformationInline(StackedInline):
     model = BusinessInformation
+    form = BusinessInformationAdminForm
     can_delete = False
     verbose_name_plural = 'Business Information'
+
+    def get_fieldsets(self, request, obj=None):
+        hide_rejection = False
+        if obj:
+            try:
+                if obj.business_info.verification_status == 'verified':
+                    hide_rejection = True
+            except Exception:
+                pass
+
+        fieldsets = [('Status', {'fields': ('verification_status',)})]
+        
+        if not hide_rejection:
+            fieldsets.append(('Rejection Details', {
+                'fields': ('rejection_reason', 'rejected_fields'),
+                'classes': ('collapse',),
+            }))
+            
+        fieldsets.extend([
+            ('Basic Information', {'fields': ('dealership_name', 'display_name', 'specialization', 'dealership_description')}),
+            ('Location & Contact', {'fields': ('street_address', 'state', 'division', 'latitude', 'longitude', 'business_website', 'facebook_url', 'instagram_url')}),
+            ('License & Verification', {'fields': ('trade_license_number', 'dealership_license_document', 'dealership_license_number', 'expiry_date')}),
+            ('Media & Hours', {'fields': ('dealership_logo', 'cover_image', 'operating_hours')}),
+        ])
+        return tuple(fieldsets)
 
 @admin.register(User)
 class UserAdmin(ModelAdmin):
