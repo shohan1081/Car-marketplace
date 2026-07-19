@@ -64,8 +64,10 @@ class UserPreference(models.Model):
         ('sedan', 'Sedan'),
         ('suv', 'SUV'),
         ('hatchback', 'Hatchback'),
+        ('crossover', 'Crossover'),
+        ('pickup', 'Pickup'),
+        ('coupe', 'Coupe'),
         ('van', 'Van'),
-        ('electric', 'Electric'),
     ]
     FUEL_CHOICES = [
         ('petrol', 'Petrol'),
@@ -78,7 +80,11 @@ class UserPreference(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='preferences')
     vehicle_types = models.JSONField(default=list, blank=True, null=True)
     budget_range = models.CharField(max_length=100, blank=True, null=True)
-    fuel_preference = models.CharField(max_length=50, blank=True, null=True)
+    min_budget = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    max_budget = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    fuel_prefs = models.JSONField(default=list, blank=True, null=True)
+    transmission_prefs = models.JSONField(default=list, blank=True, null=True)
+    condition_prefs = models.JSONField(default=list, blank=True, null=True)
     city = models.CharField(max_length=100, blank=True, null=True)
 
     def __str__(self):

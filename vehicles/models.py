@@ -16,7 +16,10 @@ class Vehicle(models.Model):
         ('sedan', 'Sedan'),
         ('suv', 'SUV'),
         ('hatchback', 'Hatchback'),
+        ('crossover', 'Crossover'),
         ('pickup', 'Pickup'),
+        ('coupe', 'Coupe'),
+        ('van', 'Van'),
     ]
     CONDITION_CHOICES = [
         ('new', 'New'),

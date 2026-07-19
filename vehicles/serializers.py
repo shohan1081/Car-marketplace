@@ -101,6 +101,14 @@ class ReelNewsfeedSerializer(serializers.ModelSerializer):
             return SavedReel.objects.filter(user=user, reel=obj).exists()
         return False
 
+class SavedReelListSerializer(serializers.ModelSerializer):
+    reel = ReelNewsfeedSerializer(read_only=True)
+
+    class Meta:
+        from .models import SavedReel
+        model = SavedReel
+        fields = ['id', 'reel', 'created_at']
+
 class ReelDetailSerializer(serializers.ModelSerializer):
     dealer = DealerMinimalSerializer(read_only=True)
     vehicle = VehicleSerializer(read_only=True)
@@ -164,6 +172,9 @@ class ReelDetailSerializer(serializers.ModelSerializer):
         return ReelNewsfeedSerializer(other_reels, many=True, context=self.context).data
 
 class VehicleInquirySerializer(serializers.ModelSerializer):
+    vehicle_title = serializers.CharField(source='reel.vehicle.name', read_only=True)
+    dealer_name = serializers.CharField(source='reel.dealer.full_name', read_only=True)
+
     class Meta:
         model = VehicleInquiry
         fields = '__all__'

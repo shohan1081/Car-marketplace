@@ -123,7 +123,7 @@ class BusinessInformationSerializer(serializers.ModelSerializer):
 class UserPreferenceSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserPreference
-        fields = ['vehicle_types', 'budget_range', 'fuel_preference', 'city']
+        fields = ['vehicle_types', 'budget_range', 'min_budget', 'max_budget', 'fuel_prefs', 'transmission_prefs', 'condition_prefs', 'city']
 
     def validate_vehicle_types(self, value):
         valid_types = [choice[0] for choice in UserPreference.VEHICLE_CHOICES]
@@ -132,12 +132,13 @@ class UserPreferenceSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(f"{t} is not a valid vehicle type.")
         return value
 
-    def validate_fuel_preference(self, value):
+    def validate_fuel_prefs(self, value):
         if not value:
             return value
         valid_fuels = [choice[0] for choice in UserPreference.FUEL_CHOICES]
-        if value not in valid_fuels:
-            raise serializers.ValidationError(f"{value} is not a valid fuel preference.")
+        for f in value:
+            if f not in valid_fuels:
+                raise serializers.ValidationError(f"{f} is not a valid fuel preference.")
         return value
 
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -147,6 +148,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
     activities = serializers.SerializerMethodField()
     saved_reels_count = serializers.SerializerMethodField()
     unread_messages_count = serializers.SerializerMethodField()
+    inquiry_count = serializers.SerializerMethodField()
     verification_status = serializers.SerializerMethodField()
 
     class Meta:
@@ -154,7 +156,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'full_name', 'email', 'phone_number', 'designation', 'profile_photo', 'location', 
             'preferences', 'business_info', 'subscription',
-            'activities', 'saved_reels_count', 'unread_messages_count',
+            'activities', 'saved_reels_count', 'unread_messages_count', 'inquiry_count',
             'verification_status', 'is_buyer', 'is_dealer'
         ]
 
@@ -185,6 +187,10 @@ class UserProfileSerializer(serializers.ModelSerializer):
             conversation__participants=obj, 
             is_read=False
         ).exclude(sender=obj).count()
+
+    def get_inquiry_count(self, obj):
+        from vehicles.models import VehicleInquiry
+        return VehicleInquiry.objects.filter(buyer=obj).count()
 
     def get_activities(self, obj):
         from vehicles.models import Like, SavedReel

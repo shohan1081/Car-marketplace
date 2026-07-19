@@ -276,10 +276,9 @@ class SavedReelsListView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
+        from .serializers import SavedReelListSerializer
         saved_reels = SavedReel.objects.filter(user=request.user).order_by('-created_at')
-        # Extract the reel objects from the SavedReel relationships
-        reels = [item.reel for item in saved_reels]
-        serializer = ReelNewsfeedSerializer(reels, many=True, context={'request': request})
+        serializer = SavedReelListSerializer(saved_reels, many=True, context={'request': request})
         return Response(serializer.data)
 
 class ShareReelView(APIView):
@@ -422,6 +421,14 @@ class VehicleDetailView(APIView):
             return Response({"message": "Vehicle deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
         except Vehicle.DoesNotExist:
             return Response({"error": "Vehicle not found."}, status=status.HTTP_404_NOT_FOUND)
+
+class BuyerInquiryListView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        inquiries = VehicleInquiry.objects.filter(buyer=request.user).order_by('-created_at')
+        serializer = VehicleInquirySerializer(inquiries, many=True)
+        return Response(serializer.data)
 
 class VehicleInquiryCreateView(APIView):
     permission_classes = [permissions.IsAuthenticated]
