@@ -174,6 +174,7 @@ class ReelDetailSerializer(serializers.ModelSerializer):
 class VehicleInquirySerializer(serializers.ModelSerializer):
     vehicle_title = serializers.CharField(source='reel.vehicle.name', read_only=True)
     dealer_name = serializers.CharField(source='reel.dealer.full_name', read_only=True)
+    vehicle_price = serializers.DecimalField(source='reel.vehicle.price', max_digits=12, decimal_places=2, read_only=True)
 
     class Meta:
         model = VehicleInquiry
