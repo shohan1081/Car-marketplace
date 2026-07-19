@@ -64,7 +64,7 @@ class BusinessInformationAdmin(ModelAdmin):
         fieldsets = [('Status', {'fields': status_fields})]
         
         if not hide_rejection:
-            fieldsets.append(('Rejection Details', {
+            fieldsets.append(('Rejection Details (Fill ONLY if Rejecting)', {
                 'fields': ('rejection_reason', 'rejected_fields'),
                 'classes': ('collapse',),
             }))
@@ -110,7 +110,7 @@ class BusinessInformationInline(StackedInline):
         fieldsets = [('Status', {'fields': ('verification_status',)})]
         
         if not hide_rejection:
-            fieldsets.append(('Rejection Details', {
+            fieldsets.append(('Rejection Details (Fill ONLY if Rejecting)', {
                 'fields': ('rejection_reason', 'rejected_fields'),
                 'classes': ('collapse',),
             }))
