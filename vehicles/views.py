@@ -180,6 +180,59 @@ class NewsfeedView(APIView):
         serializer = ReelNewsfeedSerializer(queryset, many=True, context={'request': request})
         return Response(serializer.data)
 
+class VehicleSearchView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        query = request.query_params.get('q', '').strip()
+        
+        # Base queryset: only verified dealers and non-draft vehicles
+        queryset = DealerVehicleReel.objects.filter(
+            vehicle__is_draft=False,
+            dealer__business_info__verification_status='verified'
+        )
+
+        if query:
+            # Search by vehicle name, dealer name, or location
+            queryset = queryset.filter(
+                Q(vehicle__name__icontains=query) |
+                Q(vehicle__model__icontains=query) |
+                Q(dealer__business_info__display_name__icontains=query) |
+                Q(dealer__business_info__dealership_name__icontains=query) |
+                Q(vehicle__location__icontains=query)
+            )
+
+        # Filters (Optional)
+        brand = request.query_params.get('brand')
+        if brand:
+            queryset = queryset.filter(vehicle__make__icontains=brand)
+
+        body_type = request.query_params.get('body_type')
+        if body_type:
+            queryset = queryset.filter(vehicle__body_type=body_type)
+
+        transmission = request.query_params.get('transmission')
+        if transmission:
+            queryset = queryset.filter(vehicle__transmission=transmission)
+
+        min_price = request.query_params.get('min_price')
+        if min_price and min_price.isdigit():
+            queryset = queryset.filter(vehicle__price__gte=int(min_price))
+
+        max_price = request.query_params.get('max_price')
+        if max_price and max_price.isdigit():
+            queryset = queryset.filter(vehicle__price__lte=int(max_price))
+
+        specialization = request.query_params.get('specialization')
+        if specialization:
+            # Since specialization is a JSONField (list), we can check if it contains the spec
+            queryset = queryset.filter(dealer__business_info__specialization__contains=specialization)
+
+        queryset = queryset.distinct().order_by('-created_at')
+        
+        serializer = ReelNewsfeedSerializer(queryset, many=True, context={'request': request})
+        return Response(serializer.data)
+
 class ReelDetailView(APIView):
     permission_classes = [permissions.AllowAny]
 

@@ -30,6 +30,8 @@ class User(AbstractUser):
     location = models.CharField(max_length=255, blank=True)
     
     is_verified = models.BooleanField(default=False)
+    last_active = models.DateTimeField(null=True, blank=True)
+
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
@@ -38,6 +40,15 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.email
+
+    @property
+    def is_online(self):
+        from django.utils import timezone
+        import datetime
+        if self.last_active:
+            now = timezone.now()
+            return now - self.last_active < datetime.timedelta(minutes=5)
+        return False
 
 class OTP(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)

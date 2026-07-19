@@ -106,6 +106,29 @@ class SendMessageView(APIView):
                 text=text
             )
             serializer = MessageSerializer(msg)
+            
+            # Broadcast to websocket
+            from channels.layers import get_channel_layer
+            from asgiref.sync import async_to_sync
+            channel_layer = get_channel_layer()
+            channel_layer = get_channel_layer()
+            
+            payload = {
+                'type': 'chat_message',
+                'message': msg.text,
+                'sender_email': request.user.email,
+                'sender_id': request.user.id,
+                'created_at': msg.created_at.isoformat(),
+                'message_id': msg.id,
+                'conversation_id': str(conversation_id)
+            }
+            
+            for participant in conversation.participants.all():
+                async_to_sync(channel_layer.group_send)(
+                    f'user_{participant.id}',
+                    payload
+                )
+            
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         except Conversation.DoesNotExist:
             return Response({"error": "Conversation not found."}, status=status.HTTP_404_NOT_FOUND)

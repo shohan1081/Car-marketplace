@@ -42,3 +42,10 @@ class TranslationMiddleware(MiddlewareMixin):
             return translated_text
         else:
             return data
+
+class UpdateLastActiveMiddleware(MiddlewareMixin):
+    def process_request(self, request):
+        if request.user.is_authenticated:
+            from django.utils import timezone
+            request.user.last_active = timezone.now()
+            request.user.save(update_fields=['last_active'])

@@ -108,10 +108,24 @@ class ReelDetailSerializer(serializers.ModelSerializer):
     saves_count = serializers.IntegerField(source='saves.count', read_only=True)
     suggested_reels = serializers.SerializerMethodField()
     location_details = serializers.SerializerMethodField()
+    is_liked = serializers.SerializerMethodField()
+    is_saved = serializers.SerializerMethodField()
 
     class Meta:
         model = DealerVehicleReel
         fields = '__all__'
+
+    def get_is_liked(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return Like.objects.filter(user=request.user, reel=obj).exists()
+        return False
+
+    def get_is_saved(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return SavedReel.objects.filter(user=request.user, reel=obj).exists()
+        return False
 
     def get_location_details(self, obj):
         vehicle = obj.vehicle
