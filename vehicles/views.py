@@ -217,11 +217,11 @@ class VehicleSearchView(APIView):
 
         min_price = request.query_params.get('min_price')
         if min_price and min_price.isdigit():
-            queryset = queryset.filter(vehicle__price__gte=int(min_price))
+            queryset = queryset.filter(vehicle__asking_price__gte=int(min_price))
 
         max_price = request.query_params.get('max_price')
         if max_price and max_price.isdigit():
-            queryset = queryset.filter(vehicle__price__lte=int(max_price))
+            queryset = queryset.filter(vehicle__asking_price__lte=int(max_price))
 
         specialization = request.query_params.get('specialization')
         if specialization:
