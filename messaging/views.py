@@ -1,8 +1,8 @@
 from rest_framework import generics, permissions, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from .models import Conversation, Message
-from .serializers import ConversationSerializer, MessageSerializer
+from .models import Conversation, Message, Notification
+from .serializers import ConversationSerializer, MessageSerializer, NotificationSerializer
 from vehicles.models import DealerVehicleReel
 from django.contrib.auth import get_user_model
 
@@ -132,3 +132,18 @@ class SendMessageView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         except Conversation.DoesNotExist:
             return Response({"error": "Conversation not found."}, status=status.HTTP_404_NOT_FOUND)
+
+class NotificationListView(generics.ListAPIView):
+    serializer_class = NotificationSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Notification.objects.filter(user=self.request.user)
+
+class NotificationDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = NotificationSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Notification.objects.filter(user=self.request.user)
+

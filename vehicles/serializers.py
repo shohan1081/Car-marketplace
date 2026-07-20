@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Music, Vehicle, DealerVehicleReel, Like, SavedReel, VehicleInquiry
+from .models import Music, Vehicle, DealerVehicleReel, Like, SavedReel, VehicleInquiry, Comment
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -74,6 +74,22 @@ class VehicleMinimalSerializer(serializers.ModelSerializer):
         model = Vehicle
         fields = ['name', 'year', 'asking_price', 'negotiable', 'mileage_km', 'fuel_type', 'transmission']
 
+class CommentSerializer(serializers.ModelSerializer):
+    user_name = serializers.CharField(source='user.full_name', read_only=True)
+    user_email = serializers.EmailField(source='user.email', read_only=True)
+    user_profile_pic = serializers.ImageField(source='user.profile_photo', read_only=True)
+    is_owner = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Comment
+        fields = ['id', 'user_name', 'user_email', 'user_profile_pic', 'text', 'created_at', 'is_owner']
+
+    def get_is_owner(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return obj.user == request.user
+        return False
+
 class ReelNewsfeedSerializer(serializers.ModelSerializer):
     dealer_id = serializers.IntegerField(source='dealer.id', read_only=True)
     dealer_name = serializers.CharField(source='dealer.full_name', read_only=True)
@@ -85,10 +101,11 @@ class ReelNewsfeedSerializer(serializers.ModelSerializer):
     is_liked = serializers.SerializerMethodField()
     is_saved = serializers.SerializerMethodField()
     dealer_is_followed = serializers.SerializerMethodField()
+    comments_count = serializers.IntegerField(source='comments.count', read_only=True)
 
     class Meta:
         model = DealerVehicleReel
-        fields = ['id', 'video_file', 'dealer_id', 'dealer_name', 'dealer_profile_photo', 'dealer_rating', 'dealer_reviews', 'dealer_is_followed', 'vehicle_details', 'likes_count', 'share_count', 'view_count', 'is_liked', 'is_saved', 'created_at']
+        fields = ['id', 'video_file', 'dealer_id', 'dealer_name', 'dealer_profile_photo', 'dealer_rating', 'dealer_reviews', 'dealer_is_followed', 'vehicle_details', 'likes_count', 'share_count', 'view_count', 'comments_count', 'is_liked', 'is_saved', 'created_at']
 
     def get_is_liked(self, obj):
         user = self.context.get('request').user
@@ -126,6 +143,8 @@ class ReelDetailSerializer(serializers.ModelSerializer):
     location_details = serializers.SerializerMethodField()
     is_liked = serializers.SerializerMethodField()
     is_saved = serializers.SerializerMethodField()
+    dealer_is_followed = serializers.SerializerMethodField()
+    comments_count = serializers.IntegerField(source='comments.count', read_only=True)
 
     class Meta:
         model = DealerVehicleReel
@@ -141,6 +160,13 @@ class ReelDetailSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         if request and request.user.is_authenticated:
             return SavedReel.objects.filter(user=request.user, reel=obj).exists()
+        return False
+
+    def get_dealer_is_followed(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            from users.models import Follow
+            return Follow.objects.filter(follower=request.user, dealer=obj.dealer).exists()
         return False
 
     def get_location_details(self, obj):
@@ -182,7 +208,7 @@ class ReelDetailSerializer(serializers.ModelSerializer):
 class VehicleInquirySerializer(serializers.ModelSerializer):
     vehicle_title = serializers.CharField(source='reel.vehicle.name', read_only=True)
     dealer_name = serializers.CharField(source='reel.dealer.full_name', read_only=True)
-    vehicle_price = serializers.DecimalField(source='reel.vehicle.price', max_digits=12, decimal_places=2, read_only=True)
+    vehicle_price = serializers.DecimalField(source='reel.vehicle.asking_price', max_digits=12, decimal_places=2, read_only=True)
 
     class Meta:
         model = VehicleInquiry

@@ -5,12 +5,12 @@ from django.db.models import Sum, Count, Avg, Case, When, Value, IntegerField, Q
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
-from .models import Music, Vehicle, DealerVehicleReel, Like, SavedReel, ReelView, VehicleInquiry
+from .models import Music, Vehicle, DealerVehicleReel, Like, SavedReel, ReelView, VehicleInquiry, Comment
 from .serializers import (
     MusicSerializer, VehicleSerializer, ReelNewsfeedSerializer, 
-    ReelDetailSerializer, VehicleInquirySerializer
+    ReelDetailSerializer, VehicleInquirySerializer, CommentSerializer
 )
-from messaging.models import Conversation, Message
+from messaging.models import Conversation, Message, Notification
 from users.models import BusinessInformation, Follow
 
 class ReelViewCountView(APIView):
@@ -541,5 +541,59 @@ class DealerInquiryActionView(APIView):
         except VehicleInquiry.DoesNotExist:
             return Response({"error": "Inquiry not found."}, status=status.HTTP_404_NOT_FOUND)
 
+class ReelCommentListView(APIView):
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
+    def get(self, request, pk):
+        try:
+            reel = DealerVehicleReel.objects.get(pk=pk)
+        except DealerVehicleReel.DoesNotExist:
+            return Response({"error": "Reel not found."}, status=status.HTTP_404_NOT_FOUND)
+        
+        comments = reel.comments.all()
+        serializer = CommentSerializer(comments, many=True, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
+    def post(self, request, pk):
+        if not request.user.is_authenticated:
+            return Response({"error": "Authentication credentials were not provided."}, status=status.HTTP_401_UNAUTHORIZED)
+            
+        try:
+            reel = DealerVehicleReel.objects.get(pk=pk)
+        except DealerVehicleReel.DoesNotExist:
+            return Response({"error": "Reel not found."}, status=status.HTTP_404_NOT_FOUND)
+            
+        text = request.data.get('text')
+        if not text:
+            return Response({"error": "Comment text is required."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        comment = Comment.objects.create(user=request.user, reel=reel, text=text)
+        
+        # Create notification for dealer
+        if reel.dealer != request.user:
+            Notification.objects.create(
+                user=reel.dealer,
+                title="New Comment on Your Reel",
+                body=f"{request.user.full_name or request.user.email} commented on your {reel.vehicle.name} reel.",
+                notification_type="comment",
+                reference_id=str(reel.id),
+                extra_data={"comment_id": comment.id}
+            )
+            
+        serializer = CommentSerializer(comment, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+class ReelCommentDetailView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def delete(self, request, comment_id):
+        try:
+            comment = Comment.objects.get(id=comment_id)
+        except Comment.DoesNotExist:
+            return Response({"error": "Comment not found."}, status=status.HTTP_404_NOT_FOUND)
+            
+        if comment.user != request.user:
+            return Response({"error": "You do not have permission to delete this comment."}, status=status.HTTP_403_FORBIDDEN)
+            
+        comment.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

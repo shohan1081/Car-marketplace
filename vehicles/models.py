@@ -172,3 +172,15 @@ class VehicleInquiry(models.Model):
 
     def __str__(self):
         return f"Inquiry for {self.reel.vehicle.name} by {self.full_name}"
+
+class Comment(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='comments')
+    reel = models.ForeignKey(DealerVehicleReel, on_delete=models.CASCADE, related_name='comments')
+    text = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']
+
+    def __str__(self):
+        return f"Comment by {self.user.email} on {self.reel.id}"

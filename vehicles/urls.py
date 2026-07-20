@@ -5,7 +5,7 @@ from .views import (
     NewsfeedView, ReelDetailView, LikeReelView, SaveReelView, ShareReelView,
     SavedReelsListView, VehicleInquiryCreateView, ReelViewCountView,
     DealerInquiryListView, DealerInquiryDetailView, DealerInquiryActionView,
-    VehicleSearchView, BuyerInquiryListView
+    VehicleSearchView, BuyerInquiryListView, ReelCommentListView, ReelCommentDetailView
 )
 
 urlpatterns = [
@@ -35,4 +35,6 @@ urlpatterns = [
     path('reels/<int:pk>/share/', ShareReelView.as_view(), name='reel-share'),
     path('reels/<int:pk>/view/', ReelViewCountView.as_view(), name='reel-view'),
     path('reels/<int:pk>/inquiry/', VehicleInquiryCreateView.as_view(), name='reel-inquiry'),
+    path('reels/<int:pk>/comments/', ReelCommentListView.as_view(), name='reel-comments'),
+    path('comments/<int:comment_id>/', ReelCommentDetailView.as_view(), name='comment-detail'),
 ]

@@ -1,5 +1,10 @@
 from rest_framework import serializers
-from .models import Conversation, Message
+from .models import Conversation, Message, Notification
+
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = ['id', 'title', 'body', 'notification_type', 'reference_id', 'extra_data', 'is_read', 'created_at']
 
 class MessageSerializer(serializers.ModelSerializer):
     sender_email = serializers.EmailField(source='sender.email', read_only=True)
