@@ -150,6 +150,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
     unread_messages_count = serializers.SerializerMethodField()
     inquiry_count = serializers.SerializerMethodField()
     verification_status = serializers.SerializerMethodField()
+    following_count = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -157,7 +158,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'id', 'full_name', 'email', 'phone_number', 'designation', 'profile_photo', 'location', 
             'preferences', 'business_info', 'subscription',
             'activities', 'saved_reels_count', 'unread_messages_count', 'inquiry_count',
-            'verification_status', 'is_buyer', 'is_dealer'
+            'verification_status', 'is_buyer', 'is_dealer', 'following_count'
         ]
 
     def get_subscription(self, obj):
@@ -176,6 +177,9 @@ class UserProfileSerializer(serializers.ModelSerializer):
             except BusinessInformation.DoesNotExist:
                 return 'not_submitted'
         return 'n/a'
+
+    def get_following_count(self, obj):
+        return obj.following.count()
 
     def get_saved_reels_count(self, obj):
         from vehicles.models import SavedReel
@@ -364,6 +368,22 @@ class DeleteAccountSerializer(serializers.Serializer):
     password = serializers.CharField(write_only=True)
 
 class FollowerSerializer(serializers.ModelSerializer):
+    store_name = serializers.SerializerMethodField()
+    store_icon = serializers.SerializerMethodField()
+
     class Meta:
         model = User
-        fields = ['id', 'full_name', 'email', 'profile_photo']
+        fields = ['id', 'full_name', 'email', 'profile_photo', 'is_dealer', 'store_name', 'store_icon']
+
+    def get_store_name(self, obj):
+        if obj.is_dealer and hasattr(obj, 'business_info'):
+            return obj.business_info.dealership_name
+        return None
+
+    def get_store_icon(self, obj):
+        if obj.is_dealer and hasattr(obj, 'business_info') and obj.business_info.dealership_logo:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.business_info.dealership_logo.url)
+            return obj.business_info.dealership_logo.url
+        return None

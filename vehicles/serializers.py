@@ -84,10 +84,11 @@ class ReelNewsfeedSerializer(serializers.ModelSerializer):
     likes_count = serializers.IntegerField(source='likes.count', read_only=True)
     is_liked = serializers.SerializerMethodField()
     is_saved = serializers.SerializerMethodField()
+    dealer_is_followed = serializers.SerializerMethodField()
 
     class Meta:
         model = DealerVehicleReel
-        fields = ['id', 'video_file', 'dealer_id', 'dealer_name', 'dealer_profile_photo', 'dealer_rating', 'dealer_reviews', 'vehicle_details', 'likes_count', 'share_count', 'view_count', 'is_liked', 'is_saved', 'created_at']
+        fields = ['id', 'video_file', 'dealer_id', 'dealer_name', 'dealer_profile_photo', 'dealer_rating', 'dealer_reviews', 'dealer_is_followed', 'vehicle_details', 'likes_count', 'share_count', 'view_count', 'is_liked', 'is_saved', 'created_at']
 
     def get_is_liked(self, obj):
         user = self.context.get('request').user
@@ -99,6 +100,13 @@ class ReelNewsfeedSerializer(serializers.ModelSerializer):
         user = self.context.get('request').user
         if user.is_authenticated:
             return SavedReel.objects.filter(user=user, reel=obj).exists()
+        return False
+
+    def get_dealer_is_followed(self, obj):
+        user = self.context.get('request').user
+        if user.is_authenticated:
+            from users.models import Follow
+            return Follow.objects.filter(follower=user, dealer=obj.dealer).exists()
         return False
 
 class SavedReelListSerializer(serializers.ModelSerializer):

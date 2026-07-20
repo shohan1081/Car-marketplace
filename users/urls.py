@@ -4,8 +4,8 @@ from .views import (
     BuyerSignupView, DealerSignupView, LoginView, OTPVerifyView, 
     UserPreferenceView, BusinessInformationView, FirebaseAuthView,
     ForgetPasswordView, ResetPasswordView, DealerProfileView, DealerReviewView,
-    UserProfileView, UserSearchView, FollowDealerView, DealerFollowersListView, DealerProfileShareView,
-    DeleteAccountView, DealerProfileUpdateView
+    UserProfileView, UserSearchView, FollowDealerView, DealerFollowersListView,
+    UserFollowingListView, DealerProfileShareView, DeleteAccountView, DealerProfileUpdateView
 )
 
 urlpatterns = [
@@ -33,6 +33,7 @@ urlpatterns = [
     path('dealer/<int:pk>/follow/', FollowDealerView.as_view(), name='dealer-follow'),
     path('dealer/<int:pk>/share/', DealerProfileShareView.as_view(), name='dealer-share'),
     path('dealer/followers/', DealerFollowersListView.as_view(), name='dealer-followers'),
+    path('following/', UserFollowingListView.as_view(), name='user-following'),
     path('search/', UserSearchView.as_view(), name='user-search'),
     ]
 

@@ -381,15 +381,17 @@ class FollowDealerView(APIView):
                 # Unfollow if already following
                 follow.delete()
                 message = "Unfollowed successfully."
+                is_followed = False
             else:
                 message = "Followed successfully."
+                is_followed = True
             
             # Update follower count
             info = dealer.business_info
             info.follower_count = Follow.objects.filter(dealer=dealer).count()
             info.save()
             
-            return Response({"message": message}, status=status.HTTP_200_OK)
+            return Response({"message": message, "is_followed": is_followed}, status=status.HTTP_200_OK)
         except User.DoesNotExist:
             return Response({"error": "Dealer not found."}, status=status.HTTP_404_NOT_FOUND)
         except BusinessInformation.DoesNotExist:
@@ -403,7 +405,16 @@ class DealerFollowersListView(APIView):
             return Response({"error": "Only dealers can see their followers list."}, status=status.HTTP_403_FORBIDDEN)
         
         followers = User.objects.filter(following__dealer=request.user)
-        serializer = FollowerSerializer(followers, many=True)
+        serializer = FollowerSerializer(followers, many=True, context={'request': request})
+        return Response(serializer.data)
+
+class UserFollowingListView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        # Buyers and Dealers can both follow dealers.
+        following = User.objects.filter(followers__follower=request.user)
+        serializer = FollowerSerializer(following, many=True, context={'request': request})
         return Response(serializer.data)
 
 class DealerProfileShareView(APIView):

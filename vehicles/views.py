@@ -267,8 +267,8 @@ class SaveReelView(APIView):
             save, created = SavedReel.objects.get_or_create(user=request.user, reel=reel)
             if not created:
                 save.delete()
-                return Response({"message": "Removed from saved successfully."}, status=status.HTTP_200_OK)
-            return Response({"message": "Saved successfully."}, status=status.HTTP_201_CREATED)
+                return Response({"saved": False, "message": "Removed from saved successfully."}, status=status.HTTP_200_OK)
+            return Response({"saved": True, "message": "Saved successfully."}, status=status.HTTP_201_CREATED)
         except DealerVehicleReel.DoesNotExist:
             return Response({"error": "Reel not found."}, status=status.HTTP_404_NOT_FOUND)
 
