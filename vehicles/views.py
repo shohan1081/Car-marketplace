@@ -209,11 +209,11 @@ class VehicleSearchView(APIView):
 
         body_type = request.query_params.get('body_type')
         if body_type:
-            queryset = queryset.filter(vehicle__body_type=body_type)
+            queryset = queryset.filter(vehicle__body_type__iexact=body_type)
 
         transmission = request.query_params.get('transmission')
         if transmission:
-            queryset = queryset.filter(vehicle__transmission=transmission)
+            queryset = queryset.filter(vehicle__transmission__iexact=transmission)
 
         min_price = request.query_params.get('min_price')
         if min_price and min_price.isdigit():
