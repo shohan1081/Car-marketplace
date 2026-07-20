@@ -205,7 +205,7 @@ class VehicleSearchView(APIView):
         # Filters (Optional)
         brand = request.query_params.get('brand')
         if brand:
-            queryset = queryset.filter(vehicle__make__icontains=brand)
+            queryset = queryset.filter(vehicle__name__icontains=brand)
 
         body_type = request.query_params.get('body_type')
         if body_type:
