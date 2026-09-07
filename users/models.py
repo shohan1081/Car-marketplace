@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
+from .validators import validate_license_document
 
 class UserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
@@ -65,7 +66,7 @@ class UserPreference(models.Model):
     ]
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='preferences')
-    vehicle_types = models.JSONField(default=list)
+    vehicle_types = models.JSONField(default=list, blank=True)
     budget_range = models.CharField(max_length=100)
     fuel_preference = models.CharField(max_length=50)
     city = models.CharField(max_length=100)
@@ -94,7 +95,7 @@ class BusinessInformation(models.Model):
     
     dealership_name = models.CharField(max_length=255)
     display_name = models.CharField(max_length=255)
-    specialization = models.JSONField(default=list)
+    specialization = models.JSONField(default=list, blank=True)
     
     street_address = models.CharField(max_length=255)
     state = models.CharField(max_length=100)
@@ -102,14 +103,14 @@ class BusinessInformation(models.Model):
     
     business_website = models.URLField(blank=True, null=True)
     trade_license_number = models.CharField(max_length=100)
-    dealership_license_document = models.ImageField(upload_to='licenses/')
+    dealership_license_document = models.FileField(upload_to='licenses/', validators=[validate_license_document])
     dealership_license_number = models.CharField(max_length=100)
     expiry_date = models.DateField()
     
     dealership_logo = models.ImageField(upload_to='dealer_logos/')
     cover_image = models.ImageField(upload_to='dealer_covers/')
     dealership_description = models.TextField()
-    operating_hours = models.JSONField(default=dict)
+    operating_hours = models.JSONField(default=dict, blank=True)
     
     facebook_url = models.URLField(blank=True, null=True)
     instagram_url = models.URLField(blank=True, null=True)
