@@ -1,8 +1,29 @@
+import json
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from .models import UserPreference, OTP, BusinessInformation
 
 User = get_user_model()
+
+
+class FlexibleJSONField(serializers.JSONField):
+    """
+    A JSONField that also accepts a JSON-encoded string.
+
+    Plain serializers.JSONField only parses raw JSON strings when
+    binary=True is set; otherwise a string value (which is exactly what
+    every field becomes when a request is sent as multipart/form-data,
+    e.g. Postman's form-data tab, or any request that also uploads a
+    file) passes validation unchanged and gets saved as a literal string
+    instead of a dict/list. This field parses that string first.
+    """
+    def to_internal_value(self, data):
+        if isinstance(data, str):
+            try:
+                data = json.loads(data)
+            except (TypeError, ValueError):
+                self.fail('invalid')
+        return super().to_internal_value(data)
 
 class BuyerSignupSerializer(serializers.ModelSerializer):
     re_enter_password = serializers.CharField(write_only=True)
@@ -75,6 +96,12 @@ class DealerSignupSerializer(serializers.ModelSerializer):
         return user
 
 class BusinessInformationSerializer(serializers.ModelSerializer):
+    # Explicit FlexibleJSONField so these still parse correctly when sent
+    # as a JSON-encoded string via multipart/form-data (this endpoint also
+    # takes file uploads, so it's almost always submitted as multipart).
+    specialization = FlexibleJSONField(required=False)
+    operating_hours = FlexibleJSONField(required=False)
+
     class Meta:
         model = BusinessInformation
         fields = '__all__'
@@ -89,6 +116,8 @@ class BusinessInformationSerializer(serializers.ModelSerializer):
         return value
 
 class UserPreferenceSerializer(serializers.ModelSerializer):
+    vehicle_types = FlexibleJSONField(required=False)
+
     class Meta:
         model = UserPreference
         fields = ['vehicle_types', 'budget_range', 'fuel_preference', 'city']
@@ -274,14 +303,14 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
 class DealerProfileUpdateSerializer(serializers.ModelSerializer):
     dealership_name = serializers.CharField(source='business_info.dealership_name', required=False)
     display_name = serializers.CharField(source='business_info.display_name', required=False)
-    specialization = serializers.JSONField(source='business_info.specialization', required=False)
+    specialization = FlexibleJSONField(source='business_info.specialization', required=False)
     street_address = serializers.CharField(source='business_info.street_address', required=False)
     state = serializers.CharField(source='business_info.state', required=False)
     division = serializers.CharField(source='business_info.division', required=False)
     business_website = serializers.URLField(source='business_info.business_website', required=False)
     trade_license_number = serializers.CharField(source='business_info.trade_license_number', required=False)
     dealership_description = serializers.CharField(source='business_info.dealership_description', required=False)
-    operating_hours = serializers.JSONField(source='business_info.operating_hours', required=False)
+    operating_hours = FlexibleJSONField(source='business_info.operating_hours', required=False)
     facebook_url = serializers.URLField(source='business_info.facebook_url', required=False)
     instagram_url = serializers.URLField(source='business_info.instagram_url', required=False)
     latitude = serializers.DecimalField(source='business_info.latitude', max_digits=9, decimal_places=6, required=False)
