@@ -1,6 +1,6 @@
 from django.contrib import admin
 from unfold.admin import ModelAdmin
-from .models import Music, Vehicle, DealerVehicleReel
+from .models import Music, Vehicle, DealerVehicleReel, AIVideoGeneration
 
 @admin.register(Music)
 class MusicAdmin(ModelAdmin):
@@ -16,3 +16,10 @@ class VehicleAdmin(ModelAdmin):
 @admin.register(DealerVehicleReel)
 class DealerVehicleReelAdmin(ModelAdmin):
     list_display = ['vehicle', 'dealer', 'created_at']
+
+@admin.register(AIVideoGeneration)
+class AIVideoGenerationAdmin(ModelAdmin):
+    list_display = ['job_id', 'dealer', 'status', 'duration', 'resolution', 'created_at']
+    list_filter = ['status']
+    search_fields = ['job_id', 'dealer__email']
+    readonly_fields = ['job_id', 'created_at', 'updated_at']
