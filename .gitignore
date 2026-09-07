@@ -166,3 +166,5 @@ cython_debug/
 # OS specific
 .DS_Store
 Thumbs.db
+
+tmp_test_images/
