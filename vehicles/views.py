@@ -1,15 +1,19 @@
+import os
 import json
 from datetime import datetime, timedelta
+from django.conf import settings
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.utils import timezone
 from django.db.models import Sum, Count, Avg, Case, When, Value, IntegerField, Q
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
-from .models import Music, Vehicle, DealerVehicleReel, Like, SavedReel, ReelView, VehicleInquiry
+from .models import Music, Vehicle, DealerVehicleReel, Like, SavedReel, ReelView, VehicleInquiry, AIVideoGeneration
 from .serializers import (
-    MusicSerializer, VehicleSerializer, ReelNewsfeedSerializer, 
-    ReelDetailSerializer, VehicleInquirySerializer
+    MusicSerializer, VehicleSerializer, ReelNewsfeedSerializer,
+    ReelDetailSerializer, VehicleInquirySerializer, AIVideoGenerationSerializer
 )
+from .ai_video import dispatch_video_generation, download_generated_video
 from messaging.models import Conversation, Message
 from users.models import BusinessInformation, Follow
 
@@ -264,7 +268,7 @@ class MusicListView(APIView):
 
     def get(self, request):
         musics = Music.objects.all()
-        serializer = MusicSerializer(musics, many=True)
+        serializer = MusicSerializer(musics, many=True, context={'request': request})
         return Response(serializer.data)
 
 class VehicleCreateView(APIView):
@@ -291,11 +295,11 @@ class VehicleCreateView(APIView):
                 "error": "You need an active subscription to post vehicle listings. Please purchase a plan."
             }, status=status.HTTP_403_FORBIDDEN)
         
-        serializer = VehicleSerializer(data=request.data)
+        serializer = VehicleSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             is_draft = request.query_params.get('draft', 'false').lower() == 'true'
             vehicle = serializer.save(dealer=request.user, is_draft=is_draft)
-            return Response(VehicleSerializer(vehicle).data, status=status.HTTP_201_CREATED)
+            return Response(VehicleSerializer(vehicle, context={'request': request}).data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class VehiclePreviewView(APIView):
@@ -305,7 +309,7 @@ class VehiclePreviewView(APIView):
         """
         Temporary preview that doesn't save to DB.
         """
-        serializer = VehicleSerializer(data=request.data)
+        serializer = VehicleSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             # Return validated data as a preview
             return Response(serializer.validated_data, status=status.HTTP_200_OK)
@@ -346,7 +350,7 @@ class VehicleDetailView(APIView):
     def get(self, request, pk):
         try:
             vehicle = Vehicle.objects.get(pk=pk, dealer=request.user)
-            serializer = VehicleSerializer(vehicle)
+            serializer = VehicleSerializer(vehicle, context={'request': request})
             return Response(serializer.data)
         except Vehicle.DoesNotExist:
             return Response({"error": "Vehicle not found."}, status=status.HTTP_404_NOT_FOUND)
@@ -354,7 +358,7 @@ class VehicleDetailView(APIView):
     def patch(self, request, pk):
         try:
             vehicle = Vehicle.objects.get(pk=pk, dealer=request.user)
-            serializer = VehicleSerializer(vehicle, data=request.data, partial=True)
+            serializer = VehicleSerializer(vehicle, data=request.data, partial=True, context={'request': request})
             if serializer.is_valid():
                 serializer.save()
                 return Response(serializer.data)
@@ -480,6 +484,108 @@ class DealerInquiryActionView(APIView):
             })
         except VehicleInquiry.DoesNotExist:
             return Response({"error": "Inquiry not found."}, status=status.HTTP_404_NOT_FOUND)
+
+ALLOWED_AI_IMAGE_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.webp', '.avif'}
+
+class AIVideoGenerationView(APIView):
+    """
+    Accepts 5-7 reference images (+ optional prompt/duration/resolution) from
+    a dealer and hands the job off to the external car-video-agent service.
+    That service generates the video asynchronously and calls our webhook
+    (AIVideoWebhookView) when it's done.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        if not request.user.is_dealer:
+            return Response({"error": "Only dealers can generate AI videos."}, status=status.HTTP_403_FORBIDDEN)
+
+        try:
+            if request.user.business_info.verification_status != 'verified':
+                return Response({
+                    "error": "Your account is not verified. Please complete your business information and wait for admin approval before generating AI videos."
+                }, status=status.HTTP_403_FORBIDDEN)
+        except BusinessInformation.DoesNotExist:
+            return Response({
+                "error": "Please complete your business information first."
+            }, status=status.HTTP_403_FORBIDDEN)
+
+        if not hasattr(request.user, 'subscription') or not request.user.subscription.is_valid:
+            return Response({
+                "error": "You need an active subscription to generate AI videos. Please purchase a plan."
+            }, status=status.HTTP_403_FORBIDDEN)
+
+        images = request.FILES.getlist('images')
+        if len(images) < 1 or len(images) > 7:
+            return Response({"error": "Provide between 1 and 7 images."}, status=status.HTTP_400_BAD_REQUEST)
+
+        for img in images:
+            ext = os.path.splitext(img.name)[1].lower()
+            if ext not in ALLOWED_AI_IMAGE_EXTENSIONS:
+                return Response({
+                    "error": f"Unsupported file format: {ext}. Allowed: PNG, JPG, JPEG, WEBP, AVIF"
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+        generation = AIVideoGeneration.objects.create(
+            dealer=request.user,
+            prompt=request.data.get('prompt', ''),
+            duration=request.data.get('duration', '10'),
+            resolution=request.data.get('resolution', '720p'),
+        )
+
+        if not dispatch_video_generation(generation, images):
+            return Response({
+                "error": "Could not reach the AI video generation service. Please try again shortly.",
+                "job_id": generation.job_id
+            }, status=status.HTTP_502_BAD_GATEWAY)
+
+        return Response(AIVideoGenerationSerializer(generation, context={'request': request}).data, status=status.HTTP_201_CREATED)
+
+class AIVideoStatusView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, job_id):
+        try:
+            generation = AIVideoGeneration.objects.get(job_id=job_id, dealer=request.user)
+        except (AIVideoGeneration.DoesNotExist, DjangoValidationError, ValueError):
+            return Response({"error": "AI generation request not found."}, status=status.HTTP_404_NOT_FOUND)
+        return Response(AIVideoGenerationSerializer(generation, context={'request': request}).data)
+
+class AIVideoWebhookView(APIView):
+    """
+    Receives the result push from the external car-video-agent service.
+    Protected by a shared secret token (query param) instead of JWT, since
+    the caller is a backend service, not a logged-in user.
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        expected_token = getattr(settings, 'AI_VIDEO_WEBHOOK_TOKEN', '')
+        if not expected_token or request.query_params.get('token') != expected_token:
+            return Response({"error": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        job_id = request.data.get('job_id')
+        result_status = request.data.get('status')
+        video_url = request.data.get('video_url')
+        error = request.data.get('error')
+
+        try:
+            generation = AIVideoGeneration.objects.get(job_id=job_id)
+        except (AIVideoGeneration.DoesNotExist, DjangoValidationError, ValueError):
+            # Acknowledge anyway so the caller doesn't keep retrying a job we don't know about.
+            return Response({"status": "generation not found"}, status=status.HTTP_200_OK)
+
+        if result_status == 'completed' and video_url:
+            if download_generated_video(generation, video_url):
+                generation.status = 'completed'
+            else:
+                generation.status = 'failed'
+        else:
+            generation.status = 'failed'
+            generation.error_message = error or "AI video generation failed."
+
+        generation.save()
+        return Response({"status": "received"}, status=status.HTTP_200_OK)
 
 
 
