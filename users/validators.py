@@ -4,6 +4,7 @@ Custom validators for user input validation
 
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
+import os
 import re
 from datetime import date
 
@@ -197,6 +198,35 @@ def validate_profile_picture(image):
         raise ValidationError(
             _('Only JPG, JPEG, PNG, GIF, and WebP images are allowed.'),
             code='invalid_image_format'
+        )
+
+
+def validate_license_document(file):
+    """
+    Validate a dealer's uploaded trade/dealership license document.
+    Accepts either a photo of the license (image) or a scanned PDF.
+
+    Args:
+        file: Uploaded file
+
+    Raises:
+        ValidationError: If the file is too large or not a supported type
+    """
+    # Check file size (max 10MB)
+    max_size = 10 * 1024 * 1024  # 10MB in bytes
+    if file.size > max_size:
+        raise ValidationError(
+            _('File size cannot exceed 10MB.'),
+            code='file_too_large'
+        )
+
+    # Check file extension
+    valid_extensions = ['.pdf', '.jpg', '.jpeg', '.png', '.webp']
+    ext = os.path.splitext(file.name)[1].lower()
+    if ext not in valid_extensions:
+        raise ValidationError(
+            _('Only PDF, JPG, JPEG, PNG, and WebP files are allowed.'),
+            code='invalid_file_format'
         )
 
 
