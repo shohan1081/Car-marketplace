@@ -1,3 +1,4 @@
+import uuid
 from django.db import models
 from django.conf import settings
 from .validators import validate_video_duration
@@ -169,3 +170,33 @@ class VehicleInquiry(models.Model):
 
     def __str__(self):
         return f"Inquiry for {self.reel.vehicle.name} by {self.full_name}"
+
+class AIVideoGeneration(models.Model):
+    """
+    Tracks an AI video generation job handled by the external car-video-agent
+    (FastAPI) service. Django only dispatches the job and stores the result;
+    the actual generation (fal.ai / OpenAI calls) happens in that service.
+    """
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('processing', 'Processing'),
+        ('completed', 'Completed'),
+        ('failed', 'Failed'),
+    ]
+
+    job_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    dealer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='ai_video_generations')
+
+    prompt = models.CharField(max_length=500, blank=True)
+    duration = models.CharField(max_length=10, default='10')
+    resolution = models.CharField(max_length=10, default='720p')
+
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    generated_video = models.FileField(upload_to='ai_generated_videos/', null=True, blank=True)
+    error_message = models.TextField(blank=True, null=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"AI Video {self.job_id} for {self.dealer.email} ({self.status})"
