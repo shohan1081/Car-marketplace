@@ -173,7 +173,7 @@ class BusinessInformationView(APIView):
     def get(self, request):
         try:
             info = request.user.business_info
-            serializer = BusinessInformationSerializer(info)
+            serializer = BusinessInformationSerializer(info, context={'request': request})
             return Response(serializer.data)
         except BusinessInformation.DoesNotExist:
             return Response({"error": "Business information not found."}, status=status.HTTP_404_NOT_FOUND)
@@ -383,7 +383,7 @@ class DealerFollowersListView(APIView):
             return Response({"error": "Only dealers can see their followers list."}, status=status.HTTP_403_FORBIDDEN)
         
         followers = User.objects.filter(following__dealer=request.user)
-        serializer = FollowerSerializer(followers, many=True)
+        serializer = FollowerSerializer(followers, many=True, context={'request': request})
         return Response(serializer.data)
 
 class DealerProfileShareView(APIView):
@@ -428,7 +428,7 @@ class UserSearchView(APIView):
             Q(email__istartswith=query)
         ).distinct()
 
-        serializer = UserSearchSerializer(users, many=True)
+        serializer = UserSearchSerializer(users, many=True, context={'request': request})
         return Response(serializer.data)
 
 class DeleteAccountView(APIView):
