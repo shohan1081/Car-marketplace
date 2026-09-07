@@ -16,18 +16,50 @@
 						"body": {
 							"mode": "formdata",
 							"formdata": [
-								{"key": "full_name", "value": "John Doe", "type": "text"},
-								{"key": "email", "value": "buyer@example.com", "type": "text"},
-								{"key": "location", "value": "New York", "type": "text"},
-								{"key": "password", "value": "password123", "type": "text"},
-								{"key": "re_enter_password", "value": "password123", "type": "text"},
-								{"key": "profile_photo", "type": "file", "src": ""}
+								{
+									"key": "full_name",
+									"value": "John Doe",
+									"type": "text"
+								},
+								{
+									"key": "email",
+									"value": "buyer@example.com",
+									"type": "text"
+								},
+								{
+									"key": "location",
+									"value": "New York",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "password123",
+									"type": "text"
+								},
+								{
+									"key": "re_enter_password",
+									"value": "password123",
+									"type": "text"
+								},
+								{
+									"key": "profile_photo",
+									"type": "file",
+									"src": ""
+								}
 							]
 						},
 						"url": {
 							"raw": "{{base_url}}/api/users/buyer/signup/",
-							"host": ["{{base_url}}"],
-							"path": ["api", "users", "buyer", "signup", ""]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"users",
+								"buyer",
+								"signup",
+								""
+							]
 						}
 					}
 				},
@@ -39,12 +71,24 @@
 						"body": {
 							"mode": "raw",
 							"raw": "{\n    \"full_name\": \"Dealer One\",\n    \"email\": \"dealer@example.com\",\n    \"phone_number\": \"1234567890\",\n    \"designation\": \"Manager\",\n    \"password\": \"password123\",\n    \"re_enter_password\": \"password123\"\n}",
-							"options": {"raw": {"language": "json"}}
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
 						},
 						"url": {
 							"raw": "{{base_url}}/api/users/dealer/signup/",
-							"host": ["{{base_url}}"],
-							"path": ["api", "users", "dealer", "signup", ""]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"users",
+								"dealer",
+								"signup",
+								""
+							]
 						}
 					}
 				},
@@ -56,12 +100,23 @@
 						"body": {
 							"mode": "raw",
 							"raw": "{\n    \"email\": \"buyer@example.com\",\n    \"code\": \"1234\"\n}",
-							"options": {"raw": {"language": "json"}}
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
 						},
 						"url": {
 							"raw": "{{base_url}}/api/users/otp-verify/",
-							"host": ["{{base_url}}"],
-							"path": ["api", "users", "otp-verify", ""]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"users",
+								"otp-verify",
+								""
+							]
 						}
 					}
 				},
@@ -73,12 +128,24 @@
 						"body": {
 							"mode": "raw",
 							"raw": "{\n    \"email\": \"buyer@example.com\",\n    \"password\": \"password123\"\n}",
-							"options": {"raw": {"language": "json"}}
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
 						},
 						"url": {
 							"raw": "{{base_url}}/api/users/buyer/login/",
-							"host": ["{{base_url}}"],
-							"path": ["api", "users", "buyer", "login", ""]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"users",
+								"buyer",
+								"login",
+								""
+							]
 						}
 					}
 				},
@@ -87,12 +154,23 @@
 					"request": {
 						"method": "GET",
 						"header": [
-							{"key": "Authorization", "value": "Bearer {{access_token}}", "type": "text"}
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"type": "text"
+							}
 						],
 						"url": {
 							"raw": "{{base_url}}/api/users/profile/",
-							"host": ["{{base_url}}"],
-							"path": ["api", "users", "profile", ""]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"users",
+								"profile",
+								""
+							]
 						}
 					}
 				},
@@ -101,17 +179,33 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{"key": "Authorization", "value": "Bearer {{access_token}}", "type": "text"}
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"type": "text"
+							}
 						],
 						"body": {
 							"mode": "raw",
 							"raw": "{\n    \"vehicle_types\": [\"sedan\", \"suv\"],\n    \"budget_range\": \"20k-40k\",\n    \"fuel_preference\": \"petrol\",\n    \"city\": \"New York\"\n}",
-							"options": {"raw": {"language": "json"}}
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
 						},
 						"url": {
 							"raw": "{{base_url}}/api/users/buyer/preferences/",
-							"host": ["{{base_url}}"],
-							"path": ["api", "users", "buyer", "preferences", ""]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"users",
+								"buyer",
+								"preferences",
+								""
+							]
 						}
 					}
 				},
@@ -120,30 +214,94 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{"key": "Authorization", "value": "Bearer {{access_token}}", "type": "text"}
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"type": "text"
+							}
 						],
 						"body": {
 							"mode": "formdata",
 							"formdata": [
-								{"key": "dealership_name", "value": "Auto World", "type": "text"},
-								{"key": "display_name", "value": "AutoWorld NY", "type": "text"},
-								{"key": "specialization", "value": "[\"new_cars\", \"luxury\"]", "type": "text"},
-								{"key": "street_address", "value": "123 Main St", "type": "text"},
-								{"key": "state", "value": "NY", "type": "text"},
-								{"key": "division", "value": "Manhattan", "type": "text"},
-								{"key": "trade_license_number", "value": "TL12345", "type": "text"},
-								{"key": "dealership_license_number", "value": "DL67890", "type": "text"},
-								{"key": "expiry_date", "value": "2027-12-31", "type": "text"},
-								{"key": "dealership_description", "value": "Best cars in town", "type": "text"},
-								{"key": "dealership_license_document", "type": "file", "src": ""},
-								{"key": "dealership_logo", "type": "file", "src": ""},
-								{"key": "cover_image", "type": "file", "src": ""}
+								{
+									"key": "dealership_name",
+									"value": "Auto World",
+									"type": "text"
+								},
+								{
+									"key": "display_name",
+									"value": "AutoWorld NY",
+									"type": "text"
+								},
+								{
+									"key": "specialization",
+									"value": "[\"new_cars\", \"luxury\"]",
+									"type": "text"
+								},
+								{
+									"key": "street_address",
+									"value": "123 Main St",
+									"type": "text"
+								},
+								{
+									"key": "state",
+									"value": "NY",
+									"type": "text"
+								},
+								{
+									"key": "division",
+									"value": "Manhattan",
+									"type": "text"
+								},
+								{
+									"key": "trade_license_number",
+									"value": "TL12345",
+									"type": "text"
+								},
+								{
+									"key": "dealership_license_number",
+									"value": "DL67890",
+									"type": "text"
+								},
+								{
+									"key": "expiry_date",
+									"value": "2027-12-31",
+									"type": "text"
+								},
+								{
+									"key": "dealership_description",
+									"value": "Best cars in town",
+									"type": "text"
+								},
+								{
+									"key": "dealership_license_document",
+									"type": "file",
+									"src": ""
+								},
+								{
+									"key": "dealership_logo",
+									"type": "file",
+									"src": ""
+								},
+								{
+									"key": "cover_image",
+									"type": "file",
+									"src": ""
+								}
 							]
 						},
 						"url": {
 							"raw": "{{base_url}}/api/users/dealer/business-info/",
-							"host": ["{{base_url}}"],
-							"path": ["api", "users", "dealer", "business-info", ""]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"users",
+								"dealer",
+								"business-info",
+								""
+							]
 						}
 					}
 				},
@@ -154,8 +312,17 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/users/dealer/profile/2/",
-							"host": ["{{base_url}}"],
-							"path": ["api", "users", "dealer", "profile", "2", ""]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"users",
+								"dealer",
+								"profile",
+								"2",
+								""
+							]
 						}
 					}
 				},
@@ -164,17 +331,35 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{"key": "Authorization", "value": "Bearer {{access_token}}", "type": "text"}
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"type": "text"
+							}
 						],
 						"body": {
 							"mode": "raw",
 							"raw": "{\n    \"rating\": 5,\n    \"comment\": \"Excellent service!\"\n}",
-							"options": {"raw": {"language": "json"}}
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
 						},
 						"url": {
 							"raw": "{{base_url}}/api/users/dealer/profile/2/review/",
-							"host": ["{{base_url}}"],
-							"path": ["api", "users", "dealer", "profile", "2", "review", ""]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"users",
+								"dealer",
+								"profile",
+								"2",
+								"review",
+								""
+							]
 						}
 					}
 				}
@@ -188,12 +373,24 @@
 					"request": {
 						"method": "GET",
 						"header": [
-							{"key": "Authorization", "value": "Bearer {{access_token}}", "type": "text", "description": "Optional for personalized feed"}
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"type": "text",
+								"description": "Optional for personalized feed"
+							}
 						],
 						"url": {
 							"raw": "{{base_url}}/api/vehicles/newsfeed/",
-							"host": ["{{base_url}}"],
-							"path": ["api", "vehicles", "newsfeed", ""]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"vehicles",
+								"newsfeed",
+								""
+							]
 						}
 					}
 				},
@@ -204,8 +401,16 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/vehicles/reels/1/",
-							"host": ["{{base_url}}"],
-							"path": ["api", "vehicles", "reels", "1", ""]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"vehicles",
+								"reels",
+								"1",
+								""
+							]
 						}
 					}
 				},
@@ -214,17 +419,32 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{"key": "Authorization", "value": "Bearer {{access_token}}", "type": "text"}
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"type": "text"
+							}
 						],
 						"body": {
 							"mode": "raw",
 							"raw": "{\n    \"name\": \"Toyota\",\n    \"model\": \"Camry\",\n    \"description\": \"Full option Camry 2024\",\n    \"year\": 2024,\n    \"variant\": \"XLE\",\n    \"body_type\": \"sedan\",\n    \"condition\": \"new\",\n    \"mileage_km\": 0,\n    \"color\": \"White\",\n    \"fuel_type\": \"petrol\",\n    \"transmission\": \"automatic\",\n    \"asking_price\": \"35000.00\",\n    \"negotiable\": true,\n    \"listing_duration\": 30,\n    \"location\": \"NYC\",\n    \"engine_type\": \"V6\",\n    \"displacement\": \"3.5L\",\n    \"power\": \"301 hp\",\n    \"torque\": \"267 lb-ft\",\n    \"fuel_tank\": \"60L\",\n    \"doors\": 4,\n    \"seating\": 5,\n    \"weight\": \"3500 lbs\",\n    \"airbags\": true,\n    \"abs\": true,\n    \"stability_control\": true,\n    \"upholstery\": \"Leather\",\n    \"windows\": \"Power\"\n}",
-							"options": {"raw": {"language": "json"}}
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
 						},
 						"url": {
 							"raw": "{{base_url}}/api/vehicles/create/",
-							"host": ["{{base_url}}"],
-							"path": ["api", "vehicles", "create", ""]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"vehicles",
+								"create",
+								""
+							]
 						}
 					}
 				},
@@ -233,12 +453,25 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{"key": "Authorization", "value": "Bearer {{access_token}}", "type": "text"}
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"type": "text"
+							}
 						],
 						"url": {
 							"raw": "{{base_url}}/api/vehicles/reels/1/like/",
-							"host": ["{{base_url}}"],
-							"path": ["api", "vehicles", "reels", "1", "like", ""]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"vehicles",
+								"reels",
+								"1",
+								"like",
+								""
+							]
 						}
 					}
 				},
@@ -247,12 +480,25 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{"key": "Authorization", "value": "Bearer {{access_token}}", "type": "text"}
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"type": "text"
+							}
 						],
 						"url": {
 							"raw": "{{base_url}}/api/vehicles/reels/1/save/",
-							"host": ["{{base_url}}"],
-							"path": ["api", "vehicles", "reels", "1", "save", ""]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"vehicles",
+								"reels",
+								"1",
+								"save",
+								""
+							]
 						}
 					}
 				},
@@ -261,12 +507,24 @@
 					"request": {
 						"method": "GET",
 						"header": [
-							{"key": "Authorization", "value": "Bearer {{access_token}}", "type": "text"}
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"type": "text"
+							}
 						],
 						"url": {
 							"raw": "{{base_url}}/api/vehicles/reels/saved/",
-							"host": ["{{base_url}}"],
-							"path": ["api", "vehicles", "reels", "saved", ""]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"vehicles",
+								"reels",
+								"saved",
+								""
+							]
 						}
 					}
 				},
@@ -277,8 +535,17 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/vehicles/reels/1/share/",
-							"host": ["{{base_url}}"],
-							"path": ["api", "vehicles", "reels", "1", "share", ""]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"vehicles",
+								"reels",
+								"1",
+								"share",
+								""
+							]
 						}
 					}
 				},
@@ -287,17 +554,142 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{"key": "Authorization", "value": "Bearer {{access_token}}", "type": "text"}
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"type": "text"
+							}
 						],
 						"body": {
 							"mode": "raw",
 							"raw": "{\n    \"full_name\": \"John Doe\",\n    \"phone_number\": \"+123456789\",\n    \"offered_price\": \"34000.00\",\n    \"down_payment\": \"5000.00\",\n    \"loan_tenure\": 36,\n    \"credit_estimate\": \"good\",\n    \"additional_notes\": \"Looking for a quick deal.\",\n    \"agreed_to_share\": true\n}",
-							"options": {"raw": {"language": "json"}}
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
 						},
 						"url": {
 							"raw": "{{base_url}}/api/vehicles/reels/1/inquiry/",
-							"host": ["{{base_url}}"],
-							"path": ["api", "vehicles", "reels", "1", "inquiry", ""]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"vehicles",
+								"reels",
+								"1",
+								"inquiry",
+								""
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "AI Video Generation",
+			"item": [
+				{
+					"name": "Generate AI Video",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "images",
+									"type": "file",
+									"src": ""
+								},
+								{
+									"key": "images",
+									"type": "file",
+									"src": ""
+								},
+								{
+									"key": "images",
+									"type": "file",
+									"src": ""
+								},
+								{
+									"key": "images",
+									"type": "file",
+									"src": ""
+								},
+								{
+									"key": "images",
+									"type": "file",
+									"src": ""
+								},
+								{
+									"key": "prompt",
+									"value": "driving along a coastal highway at sunset",
+									"type": "text",
+									"description": "Optional. Scene description for the generated video. If omitted, a random default scene is used."
+								},
+								{
+									"key": "duration",
+									"value": "10",
+									"type": "text",
+									"description": "Optional. Video length in seconds (default 10)."
+								},
+								{
+									"key": "resolution",
+									"value": "720p",
+									"type": "text",
+									"description": "Optional. Video resolution (default 720p)."
+								}
+							]
+						},
+						"description": "Upload 5-7 reference images of the vehicle. Dealer must be verified with an active subscription. Response contains a job_id used by the status-check request below.",
+						"url": {
+							"raw": "{{base_url}}/api/vehicles/ai-video/generate/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"vehicles",
+								"ai-video",
+								"generate",
+								""
+							]
+						}
+					}
+				},
+				{
+					"name": "Check AI Video Status",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"type": "text"
+							}
+						],
+						"description": "Poll this until status is completed or failed. Set the job_id collection variable from the Generate AI Video response first.",
+						"url": {
+							"raw": "{{base_url}}/api/vehicles/ai-video/status/{{job_id}}/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"vehicles",
+								"ai-video",
+								"status",
+								"{{job_id}}",
+								""
+							]
 						}
 					}
 				}
@@ -311,12 +703,23 @@
 					"request": {
 						"method": "GET",
 						"header": [
-							{"key": "Authorization", "value": "Bearer {{access_token}}", "type": "text"}
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"type": "text"
+							}
 						],
 						"url": {
 							"raw": "{{base_url}}/api/messaging/conversations/",
-							"host": ["{{base_url}}"],
-							"path": ["api", "messaging", "conversations", ""]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"messaging",
+								"conversations",
+								""
+							]
 						}
 					}
 				},
@@ -325,12 +728,25 @@
 					"request": {
 						"method": "GET",
 						"header": [
-							{"key": "Authorization", "value": "Bearer {{access_token}}", "type": "text"}
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"type": "text"
+							}
 						],
 						"url": {
 							"raw": "{{base_url}}/api/messaging/conversations/1/messages/",
-							"host": ["{{base_url}}"],
-							"path": ["api", "messaging", "conversations", "1", "messages", ""]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"messaging",
+								"conversations",
+								"1",
+								"messages",
+								""
+							]
 						}
 					}
 				}
@@ -340,15 +756,38 @@
 	"event": [
 		{
 			"listen": "prerequest",
-			"script": {"type": "text/javascript", "exec": [""]}
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
 		},
 		{
 			"listen": "test",
-			"script": {"type": "text/javascript", "exec": [""]}
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
 		}
 	],
 	"variable": [
-		{"key": "base_url", "value": "http://127.0.0.1:8000", "type": "string"},
-		{"key": "access_token", "value": "your_jwt_access_token_here", "type": "string"}
+		{
+			"key": "base_url",
+			"value": "http://127.0.0.1:8111",
+			"type": "string"
+		},
+		{
+			"key": "access_token",
+			"value": "your_jwt_access_token_here",
+			"type": "string"
+		},
+		{
+			"key": "job_id",
+			"value": "paste_job_id_from_generate_response",
+			"type": "string"
+		}
 	]
 }
