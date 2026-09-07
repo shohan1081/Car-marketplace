@@ -1,10 +1,11 @@
 from django.urls import path
+from rest_framework_simplejwt.views import TokenRefreshView
 from .views import (
     BuyerSignupView, DealerSignupView, LoginView, OTPVerifyView, 
     UserPreferenceView, BusinessInformationView, FirebaseAuthView,
     ForgetPasswordView, ResetPasswordView, DealerProfileView, DealerReviewView,
-    UserProfileView, UserSearchView, FollowDealerView, DealerFollowersListView, DealerProfileShareView,
-    DeleteAccountView, DealerProfileUpdateView
+    UserProfileView, UserSearchView, FollowDealerView, DealerFollowersListView,
+    UserFollowingListView, DealerProfileShareView, DeleteAccountView, DealerProfileUpdateView
 )
 
 urlpatterns = [
@@ -23,6 +24,7 @@ urlpatterns = [
     path('otp-verify/', OTPVerifyView.as_view(), name='otp-verify'),
     path('forget-password/', ForgetPasswordView.as_view(), name='forget-password'),
     path('reset-password/', ResetPasswordView.as_view(), name='reset-password'),
+    path('token/refresh/', TokenRefreshView.as_view(), name='token-refresh'),
     path('firebase-auth/', FirebaseAuthView.as_view(), name='firebase-auth'),
     path('profile/', UserProfileView.as_view(), name='user-profile'),
     path('buyer/preferences/', UserPreferenceView.as_view(), name='user-preferences'),
@@ -31,6 +33,7 @@ urlpatterns = [
     path('dealer/<int:pk>/follow/', FollowDealerView.as_view(), name='dealer-follow'),
     path('dealer/<int:pk>/share/', DealerProfileShareView.as_view(), name='dealer-share'),
     path('dealer/followers/', DealerFollowersListView.as_view(), name='dealer-followers'),
+    path('following/', UserFollowingListView.as_view(), name='user-following'),
     path('search/', UserSearchView.as_view(), name='user-search'),
     ]
 

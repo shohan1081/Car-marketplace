@@ -16,6 +16,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self.conversation_id = self.scope['url_route']['kwargs']['conversation_id']
         self.room_group_name = f'chat_{self.conversation_id}'
 
+        # Update last_active
+        from django.utils import timezone
+        self.user.last_active = timezone.now()
+        await database_sync_to_async(self.user.save)(update_fields=['last_active'])
+
         # Check if user is part of the conversation
         is_part = await self.is_participant(self.user, self.conversation_id)
         print(f"Is participant in conversation {self.conversation_id}: {is_part}")
@@ -76,3 +81,33 @@ class ChatConsumer(AsyncWebsocketConsumer):
             return msg
         except Conversation.DoesNotExist:
             return None
+
+class NotificationConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        self.user = self.scope["user"]
+        
+        if not self.user.is_authenticated:
+            await self.close()
+            return
+
+        self.room_group_name = f'user_{self.user.id}'
+        
+        from django.utils import timezone
+        self.user.last_active = timezone.now()
+        await database_sync_to_async(self.user.save)(update_fields=['last_active'])
+
+        await self.channel_layer.group_add(
+            self.room_group_name,
+            self.channel_name
+        )
+        await self.accept()
+
+    async def disconnect(self, close_code):
+        if hasattr(self, 'room_group_name'):
+            await self.channel_layer.group_discard(
+                self.room_group_name,
+                self.channel_name
+            )
+
+    async def chat_message(self, event):
+        await self.send(text_data=json.dumps(event))

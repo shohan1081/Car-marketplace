@@ -17,7 +17,10 @@ class Vehicle(models.Model):
         ('sedan', 'Sedan'),
         ('suv', 'SUV'),
         ('hatchback', 'Hatchback'),
+        ('crossover', 'Crossover'),
         ('pickup', 'Pickup'),
+        ('coupe', 'Coupe'),
+        ('van', 'Van'),
     ]
     CONDITION_CHOICES = [
         ('new', 'New'),
@@ -200,3 +203,15 @@ class AIVideoGeneration(models.Model):
 
     def __str__(self):
         return f"AI Video {self.job_id} for {self.dealer.email} ({self.status})"
+
+class Comment(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='comments')
+    reel = models.ForeignKey(DealerVehicleReel, on_delete=models.CASCADE, related_name='comments')
+    text = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']
+
+    def __str__(self):
+        return f"Comment by {self.user.email} on {self.reel.id}"

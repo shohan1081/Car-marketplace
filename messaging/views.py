@@ -1,8 +1,8 @@
 from rest_framework import generics, permissions, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from .models import Conversation, Message
-from .serializers import ConversationSerializer, MessageSerializer
+from .models import Conversation, Message, Notification
+from .serializers import ConversationSerializer, MessageSerializer, NotificationSerializer
 from vehicles.models import DealerVehicleReel
 from django.contrib.auth import get_user_model
 
@@ -89,3 +89,61 @@ class MessageHistoryView(generics.ListAPIView):
             conversation_id=conversation_id, 
             conversation__participants=self.request.user
         ).order_by('created_at')
+
+class SendMessageView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, conversation_id):
+        text = request.data.get('message')
+        if not text:
+            return Response({"error": "message is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            conversation = Conversation.objects.get(id=conversation_id, participants=request.user)
+            msg = Message.objects.create(
+                conversation=conversation,
+                sender=request.user,
+                text=text
+            )
+            serializer = MessageSerializer(msg)
+            
+            # Broadcast to websocket
+            from channels.layers import get_channel_layer
+            from asgiref.sync import async_to_sync
+            channel_layer = get_channel_layer()
+            channel_layer = get_channel_layer()
+            
+            payload = {
+                'type': 'chat_message',
+                'message': msg.text,
+                'sender_email': request.user.email,
+                'sender_id': request.user.id,
+                'created_at': msg.created_at.isoformat(),
+                'message_id': msg.id,
+                'conversation_id': str(conversation_id)
+            }
+            
+            for participant in conversation.participants.all():
+                async_to_sync(channel_layer.group_send)(
+                    f'user_{participant.id}',
+                    payload
+                )
+            
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except Conversation.DoesNotExist:
+            return Response({"error": "Conversation not found."}, status=status.HTTP_404_NOT_FOUND)
+
+class NotificationListView(generics.ListAPIView):
+    serializer_class = NotificationSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Notification.objects.filter(user=self.request.user)
+
+class NotificationDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = NotificationSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Notification.objects.filter(user=self.request.user)
+

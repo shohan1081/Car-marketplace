@@ -41,7 +41,7 @@ class BuyerSignupSerializer(serializers.ModelSerializer):
         return data
 
     def create(self, validated_data):
-        validated_data.pop('re_enter_password')
+        validated_data.pop('re_enter_password', None)
         user = User.objects.create_user(
             email=validated_data['email'],
             password=validated_data['password'],
@@ -51,6 +51,17 @@ class BuyerSignupSerializer(serializers.ModelSerializer):
             is_buyer=True
         )
         return user
+
+    def update(self, instance, validated_data):
+        validated_data.pop('re_enter_password', None)
+        password = validated_data.pop('password', None)
+        if password:
+            instance.set_password(password)
+        
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        return instance
 
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
@@ -84,7 +95,7 @@ class DealerSignupSerializer(serializers.ModelSerializer):
         return data
 
     def create(self, validated_data):
-        validated_data.pop('re_enter_password')
+        validated_data.pop('re_enter_password', None)
         user = User.objects.create_user(
             email=validated_data['email'],
             password=validated_data['password'],
@@ -94,6 +105,17 @@ class DealerSignupSerializer(serializers.ModelSerializer):
             is_dealer=True
         )
         return user
+
+    def update(self, instance, validated_data):
+        validated_data.pop('re_enter_password', None)
+        password = validated_data.pop('password', None)
+        if password:
+            instance.set_password(password)
+        
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        return instance
 
 class BusinessInformationSerializer(serializers.ModelSerializer):
     # Explicit FlexibleJSONField so these still parse correctly when sent
@@ -109,6 +131,16 @@ class BusinessInformationSerializer(serializers.ModelSerializer):
 
 
     def validate_specialization(self, value):
+        import json
+        if isinstance(value, str):
+            try:
+                value = json.loads(value)
+            except json.JSONDecodeError:
+                pass # let it be a string, though it will fail the list check below
+        
+        if not isinstance(value, list):
+            value = [value]
+
         valid_choices = [choice[0] for choice in BusinessInformation.SPECIALIZATION_CHOICES]
         for s in value:
             if s not in valid_choices:
@@ -120,7 +152,7 @@ class UserPreferenceSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserPreference
-        fields = ['vehicle_types', 'budget_range', 'fuel_preference', 'city']
+        fields = ['vehicle_types', 'budget_range', 'min_budget', 'max_budget', 'fuel_prefs', 'transmission_prefs', 'condition_prefs', 'city']
 
     def validate_vehicle_types(self, value):
         valid_types = [choice[0] for choice in UserPreference.VEHICLE_CHOICES]
@@ -129,10 +161,13 @@ class UserPreferenceSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(f"{t} is not a valid vehicle type.")
         return value
 
-    def validate_fuel_preference(self, value):
+    def validate_fuel_prefs(self, value):
+        if not value:
+            return value
         valid_fuels = [choice[0] for choice in UserPreference.FUEL_CHOICES]
-        if value not in valid_fuels:
-            raise serializers.ValidationError(f"{value} is not a valid fuel preference.")
+        for f in value:
+            if f not in valid_fuels:
+                raise serializers.ValidationError(f"{f} is not a valid fuel preference.")
         return value
 
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -142,15 +177,17 @@ class UserProfileSerializer(serializers.ModelSerializer):
     activities = serializers.SerializerMethodField()
     saved_reels_count = serializers.SerializerMethodField()
     unread_messages_count = serializers.SerializerMethodField()
+    inquiry_count = serializers.SerializerMethodField()
     verification_status = serializers.SerializerMethodField()
+    following_count = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = [
             'id', 'full_name', 'email', 'phone_number', 'designation', 'profile_photo', 'location', 
             'preferences', 'business_info', 'subscription',
-            'activities', 'saved_reels_count', 'unread_messages_count',
-            'verification_status', 'is_buyer', 'is_dealer'
+            'activities', 'saved_reels_count', 'unread_messages_count', 'inquiry_count',
+            'verification_status', 'is_buyer', 'is_dealer', 'following_count'
         ]
 
     def get_subscription(self, obj):
@@ -170,6 +207,9 @@ class UserProfileSerializer(serializers.ModelSerializer):
                 return 'not_submitted'
         return 'n/a'
 
+    def get_following_count(self, obj):
+        return obj.following.count()
+
     def get_saved_reels_count(self, obj):
         from vehicles.models import SavedReel
         return SavedReel.objects.filter(user=obj).count()
@@ -180,6 +220,10 @@ class UserProfileSerializer(serializers.ModelSerializer):
             conversation__participants=obj, 
             is_read=False
         ).exclude(sender=obj).count()
+
+    def get_inquiry_count(self, obj):
+        from vehicles.models import VehicleInquiry
+        return VehicleInquiry.objects.filter(buyer=obj).count()
 
     def get_activities(self, obj):
         from vehicles.models import Like, SavedReel
@@ -228,7 +272,7 @@ class PublicBusinessInformationSerializer(serializers.ModelSerializer):
             'latitude', 'longitude',
             'business_website', 'dealership_logo', 'cover_image', 
             'dealership_description', 'operating_hours', 
-            'facebook_url', 'instagram_url', 
+            'facebook_url', 'instagram_url', 'trade_license_number',
             'rating', 'review_count', 'follower_count', 'share_count', 'verification_status'
         ]
 
@@ -242,7 +286,7 @@ class DealerProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'full_name', 'email', 'profile_photo', 'business_info', 'reviews', 'review_stats', 'is_following', 'reels', 'share_url']
+        fields = ['id', 'full_name', 'email', 'phone_number', 'designation', 'profile_photo', 'business_info', 'reviews', 'review_stats', 'is_following', 'reels', 'share_url']
 
     def get_reviews(self, obj):
         # Return only the 10 most recent reviews
@@ -298,7 +342,7 @@ class DealerProfileSerializer(serializers.ModelSerializer):
 class UserProfileUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['full_name', 'profile_photo', 'location']
+        fields = ['full_name', 'profile_photo', 'location', 'email', 'phone_number']
 
 class DealerProfileUpdateSerializer(serializers.ModelSerializer):
     dealership_name = serializers.CharField(source='business_info.dealership_name', required=False)
@@ -353,6 +397,22 @@ class DeleteAccountSerializer(serializers.Serializer):
     password = serializers.CharField(write_only=True)
 
 class FollowerSerializer(serializers.ModelSerializer):
+    store_name = serializers.SerializerMethodField()
+    store_icon = serializers.SerializerMethodField()
+
     class Meta:
         model = User
-        fields = ['id', 'full_name', 'email', 'profile_photo']
+        fields = ['id', 'full_name', 'email', 'profile_photo', 'is_dealer', 'store_name', 'store_icon']
+
+    def get_store_name(self, obj):
+        if obj.is_dealer and hasattr(obj, 'business_info'):
+            return obj.business_info.dealership_name
+        return None
+
+    def get_store_icon(self, obj):
+        if obj.is_dealer and hasattr(obj, 'business_info') and obj.business_info.dealership_logo:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.business_info.dealership_logo.url)
+            return obj.business_info.dealership_logo.url
+        return None

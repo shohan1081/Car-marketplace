@@ -5,7 +5,8 @@ from .views import (
     NewsfeedView, ReelDetailView, LikeReelView, SaveReelView, ShareReelView,
     SavedReelsListView, VehicleInquiryCreateView, ReelViewCountView,
     DealerInquiryListView, DealerInquiryDetailView, DealerInquiryActionView,
-    AIVideoGenerationView, AIVideoStatusView, AIVideoWebhookView
+    AIVideoGenerationView, AIVideoStatusView, AIVideoWebhookView,
+    VehicleSearchView, BuyerInquiryListView, ReelCommentListView, ReelCommentDetailView
 )
 
 urlpatterns = [
@@ -17,6 +18,9 @@ urlpatterns = [
     path('preview/', VehiclePreviewView.as_view(), name='vehicle-preview'),
     path('publish/<int:pk>/', VehicleDraftPublishView.as_view(), name='vehicle-publish'),
     
+    # Buyer Inquiries
+    path('buyer/inquiries/', BuyerInquiryListView.as_view(), name='buyer-inquiries-list'),
+
     # Dealer Inquiries
     path('inquiries/', DealerInquiryListView.as_view(), name='dealer-inquiries-list'),
     path('inquiries/<int:pk>/', DealerInquiryDetailView.as_view(), name='dealer-inquiry-detail'),
@@ -24,6 +28,7 @@ urlpatterns = [
     
     # Newsfeed & Interactions
     path('newsfeed/', NewsfeedView.as_view(), name='newsfeed'),
+    path('search/', VehicleSearchView.as_view(), name='vehicle-search'),
     path('reels/<int:pk>/', ReelDetailView.as_view(), name='reel-detail'),
     path('reels/<int:pk>/like/', LikeReelView.as_view(), name='reel-like'),
     path('reels/<int:pk>/save/', SaveReelView.as_view(), name='reel-save'),
@@ -31,6 +36,8 @@ urlpatterns = [
     path('reels/<int:pk>/share/', ShareReelView.as_view(), name='reel-share'),
     path('reels/<int:pk>/view/', ReelViewCountView.as_view(), name='reel-view'),
     path('reels/<int:pk>/inquiry/', VehicleInquiryCreateView.as_view(), name='reel-inquiry'),
+    path('reels/<int:pk>/comments/', ReelCommentListView.as_view(), name='reel-comments'),
+    path('comments/<int:comment_id>/', ReelCommentDetailView.as_view(), name='comment-detail'),
 
     # AI Video Generation (proxies to the external car-video-agent service)
     path('ai-video/generate/', AIVideoGenerationView.as_view(), name='ai-video-generate'),

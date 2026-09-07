@@ -31,6 +31,8 @@ class User(AbstractUser):
     location = models.CharField(max_length=255, blank=True)
     
     is_verified = models.BooleanField(default=False)
+    last_active = models.DateTimeField(null=True, blank=True)
+
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
@@ -39,6 +41,15 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.email
+
+    @property
+    def is_online(self):
+        from django.utils import timezone
+        import datetime
+        if self.last_active:
+            now = timezone.now()
+            return now - self.last_active < datetime.timedelta(minutes=5)
+        return False
 
 class OTP(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -54,8 +65,10 @@ class UserPreference(models.Model):
         ('sedan', 'Sedan'),
         ('suv', 'SUV'),
         ('hatchback', 'Hatchback'),
+        ('crossover', 'Crossover'),
+        ('pickup', 'Pickup'),
+        ('coupe', 'Coupe'),
         ('van', 'Van'),
-        ('electric', 'Electric'),
     ]
     FUEL_CHOICES = [
         ('petrol', 'Petrol'),
@@ -66,10 +79,14 @@ class UserPreference(models.Model):
     ]
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='preferences')
-    vehicle_types = models.JSONField(default=list, blank=True)
-    budget_range = models.CharField(max_length=100)
-    fuel_preference = models.CharField(max_length=50)
-    city = models.CharField(max_length=100)
+    vehicle_types = models.JSONField(default=list, blank=True, null=True)
+    budget_range = models.CharField(max_length=100, blank=True, null=True)
+    min_budget = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    max_budget = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    fuel_prefs = models.JSONField(default=list, blank=True, null=True)
+    transmission_prefs = models.JSONField(default=list, blank=True, null=True)
+    condition_prefs = models.JSONField(default=list, blank=True, null=True)
+    city = models.CharField(max_length=100, blank=True, null=True)
 
     def __str__(self):
         return f"Preferences for {self.user.email}"
@@ -92,6 +109,7 @@ class BusinessInformation(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='business_info')
     verification_status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     rejection_reason = models.TextField(blank=True, null=True)
+    rejected_fields = models.JSONField(default=list, blank=True, null=True)
     
     dealership_name = models.CharField(max_length=255)
     display_name = models.CharField(max_length=255)
@@ -102,15 +120,15 @@ class BusinessInformation(models.Model):
     division = models.CharField(max_length=100)
     
     business_website = models.URLField(blank=True, null=True)
-    trade_license_number = models.CharField(max_length=100)
-    dealership_license_document = models.FileField(upload_to='licenses/', validators=[validate_license_document])
-    dealership_license_number = models.CharField(max_length=100)
-    expiry_date = models.DateField()
-    
-    dealership_logo = models.ImageField(upload_to='dealer_logos/')
-    cover_image = models.ImageField(upload_to='dealer_covers/')
-    dealership_description = models.TextField()
-    operating_hours = models.JSONField(default=dict, blank=True)
+    trade_license_number = models.CharField(max_length=100, blank=True, null=True)
+    dealership_license_document = models.FileField(upload_to='licenses/', blank=True, null=True, validators=[validate_license_document])
+    dealership_license_number = models.CharField(max_length=100, blank=True, null=True)
+    expiry_date = models.DateField(blank=True, null=True)
+
+    dealership_logo = models.ImageField(upload_to='dealer_logos/', blank=True, null=True)
+    cover_image = models.ImageField(upload_to='dealer_covers/', blank=True, null=True)
+    dealership_description = models.TextField(blank=True, null=True)
+    operating_hours = models.JSONField(default=dict, blank=True, null=True)
     
     facebook_url = models.URLField(blank=True, null=True)
     instagram_url = models.URLField(blank=True, null=True)

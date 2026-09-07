@@ -28,4 +28,24 @@ urlpatterns = [
 ]
 
 if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    import os
+    import mimetypes
+    from ranged_response import RangedFileResponse
+    from django.http import Http404
+    from django.urls import re_path
+
+    def ranged_serve(request, path, document_root=None, show_indexes=False):
+        filepath = os.path.join(document_root, path)
+        if not os.path.exists(filepath):
+            raise Http404()
+        
+        content_type, encoding = mimetypes.guess_type(filepath)
+        content_type = content_type or 'application/octet-stream'
+        
+        file = open(filepath, 'rb')
+        response = RangedFileResponse(request, file, content_type=content_type)
+        return response
+
+    urlpatterns += [
+        re_path(r'^media/(?P<path>.*)$', ranged_serve, {'document_root': settings.MEDIA_ROOT}),
+    ]
