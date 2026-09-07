@@ -239,3 +239,13 @@ APPLE_ENVIRONMENT = env('APPLE_ENVIRONMENT', default='sandbox') # 'sandbox' or '
 # Google
 GOOGLE_PLAY_PACKAGE_NAME = env('GOOGLE_PLAY_PACKAGE_NAME', default='com.yourapp.package')
 GOOGLE_SERVICE_ACCOUNT_JSON = env('GOOGLE_SERVICE_ACCOUNT_JSON', default='') # Path to JSON key file
+
+# AI Video Generation (external car-video-agent FastAPI service)
+# Base URL of that service, e.g. http://127.0.0.1:8000 locally or an internal
+# address in production. Django POSTs jobs to f"{AI_VIDEO_SERVICE_URL}/generate".
+AI_VIDEO_SERVICE_URL = env('AI_VIDEO_SERVICE_URL', default='')
+# Shared secret the webhook call must include as ?token=... . Set the
+# car-video-agent's BACKEND_WEBHOOK_URL to:
+#   https://<this-domain>/api/vehicles/ai-video/webhook/?token=<this-value>
+# Left blank by default, which makes the webhook reject every request (fail closed).
+AI_VIDEO_WEBHOOK_TOKEN = env('AI_VIDEO_WEBHOOK_TOKEN', default='')
