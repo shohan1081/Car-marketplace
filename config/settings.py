@@ -33,7 +33,20 @@ SECRET_KEY = env('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env('DEBUG')
 
-ALLOWED_HOSTS = ['*'] # Allows all for local testing
+# Hosts this site may be served under. Comma-separated in the environment, e.g.
+#   DJANGO_ALLOWED_HOSTS=api.example.com,www.api.example.com,web,localhost
+# "web" and "ws" are the internal Docker service names, needed so the
+# car-video-agent's webhook call (which uses http://web:8000/...) is accepted.
+ALLOWED_HOSTS = env.list('DJANGO_ALLOWED_HOSTS', default=['localhost', '127.0.0.1'])
+
+# Origins allowed to send authenticated POST/PUT/DELETE to the admin and any
+# session-authenticated view. Must include the scheme, e.g. https://api.example.com
+CSRF_TRUSTED_ORIGINS = env.list('DJANGO_CSRF_TRUSTED_ORIGINS', default=[])
+
+# Cross-origin browser access (the Flutter mobile app does not need this; a
+# web dashboard does). Empty by default, which sends no CORS headers at all.
+CORS_ALLOWED_ORIGINS = env.list('DJANGO_CORS_ALLOWED_ORIGINS', default=[])
+CORS_ALLOW_CREDENTIALS = env.bool('DJANGO_CORS_ALLOW_CREDENTIALS', default=False)
 
 
 # Application definition
@@ -50,6 +63,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'channels',
+    'corsheaders',
     'users',
     'vehicles',
     'messaging',
@@ -64,6 +78,9 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    # CorsMiddleware must sit as high as possible, and above CommonMiddleware,
+    # so preflight responses still get the CORS headers.
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -93,20 +110,48 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 ASGI_APPLICATION = 'config.asgi.application'
 
-# Channel Layer for WebSockets
-CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels.layers.InMemoryChannelLayer',
-    },
-}
+# Channel Layer for WebSockets.
+#
+# In production the HTTP workers (gunicorn) and the WebSocket worker (daphne)
+# are SEPARATE processes. messaging/views.py pushes to the channel layer from
+# an ordinary HTTP request, so an in-memory layer would silently deliver
+# nothing. Redis is therefore required whenever REDIS_URL is set, and the
+# in-memory layer stays only as a zero-dependency local-development fallback.
+REDIS_URL = env('REDIS_URL', default='')
+
+if REDIS_URL:
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels_redis.core.RedisChannelLayer',
+            'CONFIG': {'hosts': [REDIS_URL]},
+        },
+    }
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+            'LOCATION': REDIS_URL,
+        },
+    }
+else:
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels.layers.InMemoryChannelLayer',
+        },
+    }
 
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+# DATABASE_URL drives this, e.g.
+#   postgres://nory:password@db:5432/nory
+# CONN_MAX_AGE keeps connections open between requests instead of opening a new
+# PostgreSQL connection on every single API call.
 DATABASES = {
     'default': env.db(),
 }
+DATABASES['default']['CONN_MAX_AGE'] = env.int('DJANGO_CONN_MAX_AGE', default=60)
+DATABASES['default']['CONN_HEALTH_CHECKS'] = True
 
 
 # Password validation
@@ -143,7 +188,19 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+
+# `collectstatic` copies the admin + django-unfold assets here, and nginx
+# serves this directory directly. Django itself never serves static in prod.
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STORAGES = {
+    'default': {
+        'BACKEND': 'django.core.files.storage.FileSystemStorage',
+    },
+    'staticfiles': {
+        'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
+    },
+}
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -247,3 +304,94 @@ AI_VIDEO_SERVICE_URL = env('AI_VIDEO_SERVICE_URL', default='')
 #   https://<this-domain>/api/vehicles/ai-video/webhook/?token=<this-value>
 # Left blank by default, which makes the webhook reject every request (fail closed).
 AI_VIDEO_WEBHOOK_TOKEN = env('AI_VIDEO_WEBHOOK_TOKEN', default='')
+
+
+# ---------------------------------------------------------------------------
+# Firebase Admin SDK
+# ---------------------------------------------------------------------------
+# users/utils.py:initialize_firebase() reads this. It is a PATH to the service
+# account JSON file, which is mounted read-only into the container at
+# /run/secrets/firebase.json (see docker-compose.yml). Never commit the file.
+FIREBASE_CREDENTIALS_PATH = env('FIREBASE_CREDENTIALS_PATH', default='')
+
+
+# ---------------------------------------------------------------------------
+# Upload limits
+# ---------------------------------------------------------------------------
+# Reels are videos, so anything over this threshold is streamed to a temp file
+# on disk instead of being buffered in RAM. nginx enforces the hard ceiling
+# (client_max_body_size); this only controls where Django buffers the bytes.
+FILE_UPLOAD_MAX_MEMORY_SIZE = env.int('DJANGO_FILE_UPLOAD_MAX_MEMORY_SIZE', default=5 * 1024 * 1024)
+DATA_UPLOAD_MAX_MEMORY_SIZE = env.int('DJANGO_DATA_UPLOAD_MAX_MEMORY_SIZE', default=5 * 1024 * 1024)
+DATA_UPLOAD_MAX_NUMBER_FILES = env.int('DJANGO_DATA_UPLOAD_MAX_NUMBER_FILES', default=100)
+
+
+# ---------------------------------------------------------------------------
+# Production security
+# ---------------------------------------------------------------------------
+# Everything below is inert while DEBUG=True, so local development is
+# unaffected. On the server DEBUG=False and these all switch on.
+if not DEBUG:
+    # nginx terminates TLS and forwards plain HTTP to gunicorn/daphne. Without
+    # this header Django would think every request arrived over HTTP and would
+    # redirect forever once SECURE_SSL_REDIRECT is on.
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    USE_X_FORWARDED_HOST = True
+
+    # Turn these on only AFTER the TLS certificate is installed, otherwise the
+    # site becomes unreachable over plain HTTP during first setup.
+    SECURE_SSL_REDIRECT = env.bool('DJANGO_SECURE_SSL_REDIRECT', default=False)
+    SESSION_COOKIE_SECURE = env.bool('DJANGO_SECURE_COOKIES', default=False)
+    CSRF_COOKIE_SECURE = env.bool('DJANGO_SECURE_COOKIES', default=False)
+
+    # HSTS tells browsers to refuse plain HTTP to this domain for N seconds.
+    # Start at 0, raise to 3600 once HTTPS is confirmed working, then to
+    # 31536000 (one year). A wrong value here is painful to undo.
+    SECURE_HSTS_SECONDS = env.int('DJANGO_SECURE_HSTS_SECONDS', default=0)
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = env.bool('DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS', default=False)
+    SECURE_HSTS_PRELOAD = env.bool('DJANGO_SECURE_HSTS_PRELOAD', default=False)
+
+    SESSION_COOKIE_HTTPONLY = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_REFERRER_POLICY = 'same-origin'
+    X_FRAME_OPTIONS = 'DENY'
+
+
+# ---------------------------------------------------------------------------
+# Logging
+# ---------------------------------------------------------------------------
+# Everything goes to stdout/stderr. Do not log to a file inside a container:
+# the file disappears with the container and nothing rotates it. `docker
+# compose logs` and the json-file driver's rotation handle it instead.
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {name} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': env('DJANGO_LOG_LEVEL', default='INFO'),
+    },
+    'loggers': {
+        'django.request': {
+            'handlers': ['console'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        'django.db.backends': {
+            'handlers': ['console'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+    },
+}
