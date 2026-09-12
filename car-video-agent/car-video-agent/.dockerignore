@@ -1,8 +1,10 @@
-# .dockerignore
-
 .env
+.env.*
+!.env.example
 __pycache__/
 *.pyc
+*.log
 .git
 .gitignore
 venv/
+.venv/
