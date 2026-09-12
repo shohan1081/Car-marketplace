@@ -1,0 +1,210 @@
+# ===========================================================================
+# Nory -- production stack for a single AWS EC2 instance.
+#
+#   internet :80/:443
+#        |
+#     [nginx]  TLS, static/media files, request routing, upload size limit
+#        |-- /ws/  ---------> [ws]     daphne   (WebSockets: chat, notifications)
+#        |-- everything ----> [web]    gunicorn (REST API + admin)
+#                                |
+#                                |--> [db]     PostgreSQL
+#                                |--> [redis]  channel layer + cache
+#                                |--> [agent]  FastAPI AI video service
+#
+# Only nginx publishes ports. db, redis, web, ws and agent are reachable only
+# from inside the private Docker network, never from the internet.
+# ===========================================================================
+
+# Shared log settings. Without a cap, container logs grow until the EC2 disk is
+# full -- one of the most common ways a small production box dies.
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+
+  # -------------------------------------------------------------------------
+  # PostgreSQL -- replaces the SQLite file used in development.
+  # -------------------------------------------------------------------------
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      # Named volume: the data survives `docker compose down` and image rebuilds.
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      # Other services wait for this to pass before they start.
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    logging: *default-logging
+
+  # -------------------------------------------------------------------------
+  # Redis -- Channels layer (so an HTTP request can push to a WebSocket that
+  # lives in a different process) and Django's cache backend.
+  # -------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "no", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru"]
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging: *default-logging
+
+  # -------------------------------------------------------------------------
+  # Django HTTP workers (gunicorn / WSGI). Handles the REST API and admin.
+  # This is also the only container that runs migrations + collectstatic.
+  # -------------------------------------------------------------------------
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      RUN_MIGRATIONS: "true"
+    command: >
+      gunicorn config.wsgi:application
+      --bind 0.0.0.0:8000
+      --workers ${GUNICORN_WORKERS:-3}
+      --threads ${GUNICORN_THREADS:-2}
+      --timeout ${GUNICORN_TIMEOUT:-120}
+      --graceful-timeout 30
+      --access-logfile -
+      --error-logfile -
+    volumes:
+      # Uploaded reels, dealer logos, AI videos. Shared with nginx, which
+      # serves them directly instead of making Django stream every byte.
+      - media_data:/app/media
+      # collectstatic output, read by nginx.
+      - static_data:/app/staticfiles
+      # Firebase / Google Play service-account JSON files, read-only.
+      - ./secrets:/run/secrets:ro
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/healthz/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    logging: *default-logging
+
+  # -------------------------------------------------------------------------
+  # Django WebSocket worker (daphne / ASGI). Same image, different command.
+  # Kept separate so a slow REST request can never stall live chat, and so
+  # each side can be scaled independently.
+  # -------------------------------------------------------------------------
+  ws:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      # Migrations belong to `web` only. Two containers migrating at once
+      # would race on the same tables.
+      RUN_MIGRATIONS: "false"
+    command: ["daphne", "-b", "0.0.0.0", "-p", "8000", "config.asgi:application"]
+    volumes:
+      - media_data:/app/media
+      - static_data:/app/staticfiles
+      - ./secrets:/run/secrets:ro
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/healthz/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    logging: *default-logging
+
+  # -------------------------------------------------------------------------
+  # car-video-agent -- FastAPI AI video generator.
+  # Django reaches it at http://agent:8000; it posts results back to
+  # http://web:8000/api/vehicles/ai-video/webhook/?token=...
+  # Never published to the internet.
+  # -------------------------------------------------------------------------
+  agent:
+    build:
+      context: ./car-video-agent/car-video-agent
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - ./car-video-agent/car-video-agent/.env
+    depends_on:
+      - web
+    logging: *default-logging
+
+  # -------------------------------------------------------------------------
+  # nginx -- the only container exposed to the internet.
+  # -------------------------------------------------------------------------
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      # Substituted into the site config at container start by the nginx
+      # image's built-in envsubst step, so the domain lives in .env only.
+      DOMAIN: ${DOMAIN}
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      # NGINX_CONF selects the site config: app.http.conf before you have a
+      # TLS certificate, app.https.conf afterwards. Change it in .env.
+      - ./docker/nginx/${NGINX_CONF:-app.http.conf}:/etc/nginx/templates/default.conf.template:ro
+      # Read-only copies of what Django produced.
+      - static_data:/var/www/static:ro
+      - media_data:/var/www/media:ro
+      # TLS certificates and the HTTP-01 challenge directory.
+      - certbot_conf:/etc/letsencrypt:ro
+      - certbot_www:/var/www/certbot:ro
+    depends_on:
+      - web
+      - ws
+    logging: *default-logging
+
+  # -------------------------------------------------------------------------
+  # certbot -- issues and renews the TLS certificate.
+  # Wakes every 12 hours; a certificate is only actually renewed inside its
+  # last 30 days, so this is cheap and safe to leave running.
+  # -------------------------------------------------------------------------
+  certbot:
+    image: certbot/certbot:latest
+    restart: unless-stopped
+    volumes:
+      - certbot_conf:/etc/letsencrypt
+      - certbot_www:/var/www/certbot
+    entrypoint: /bin/sh -c 'trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot --quiet; sleep 12h & wait $${!}; done'
+    logging: *default-logging
+
+volumes:
+  pgdata:
+  redisdata:
+  media_data:
+  static_data:
+  certbot_conf:
+  certbot_www:
