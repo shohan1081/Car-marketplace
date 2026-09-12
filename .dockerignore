@@ -1,0 +1,43 @@
+# Anything listed here is never sent to the Docker daemon during a build.
+# Keeping this tight makes builds faster and stops secrets leaking into layers.
+
+.git
+.gitignore
+.gitattributes
+
+# Local virtualenvs -- huge, and full of Windows binaries that break on Linux
+env/
+venv/
+.venv/
+car-video-agent/car-video-agent/venv/
+
+__pycache__/
+*.py[cod]
+*.so
+
+# Secrets. These are injected at runtime via env_file, never baked into an image.
+.env
+.env.*
+!.env.example
+!.env.production.example
+secrets/
+
+# Local database and uploads -- these live in Docker volumes on the server
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+
+*.log
+django.log
+
+# Local scratch / test helpers
+test_*.py
+tmp_test_images/
+postman_collection.json
+start_server.bat
+
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
