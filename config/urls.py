@@ -18,8 +18,21 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.http import JsonResponse
+
+
+def healthz(request):
+    """
+    Liveness probe for Docker/nginx and any future load balancer.
+
+    Deliberately does NOT touch the database: its job is to answer "is this
+    process alive and serving?", not "is every dependency up". A DB check here
+    would make the container restart in a loop during a brief database blip.
+    """
+    return JsonResponse({"status": "ok"})
 
 urlpatterns = [
+    path('healthz/', healthz, name='healthz'),
     path('admin/', admin.py.urls if hasattr(admin, 'py') else admin.site.urls), # standard is admin.site.urls
     path('api/users/', include('users.urls')),
     path('api/vehicles/', include('vehicles.urls')),
