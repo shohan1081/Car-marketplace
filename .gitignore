@@ -120,14 +120,25 @@ celerybeat.pid
 *.sage.py
 
 # Environments
+# Real secrets are ignored; the *.example templates must stay in the repo so a
+# fresh server checkout knows which variables it needs to fill in.
 .env
-.env.example
+.env.*
+!.env.example
+!.env.production.example
 .venv
 env/
 venv/
 ENV/
 env.bak/
 venv.bak/
+
+# Service-account JSON mounted into the containers at /run/secrets
+secrets/*
+!secrets/README.md
+
+# collectstatic output -- generated inside the container at every deploy
+staticfiles/
 
 # Spyder project settings
 .spyderproject
