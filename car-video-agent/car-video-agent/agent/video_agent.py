@@ -172,6 +172,13 @@ def run_video_generation(job_id: str, prompt: str | None, image_paths: list[str]
 
 def _push_to_backend(payload: VideoResultPayload):
     try:
-        httpx.post(BACKEND_WEBHOOK_URL, json=payload.model_dump(), timeout=30)
+        response = httpx.post(BACKEND_WEBHOOK_URL, json=payload.model_dump(), timeout=30)
+        # A non-2xx response (e.g. 401 from a mismatched webhook token) means
+        # Django never recorded the result -- without raise_for_status() that
+        # failure was invisible: the request "succeeded" as far as httpx.post
+        # is concerned, so the except branch below never ran and nothing was
+        # ever logged. The job then sits in "processing" forever with no
+        # trace of what went wrong.
+        response.raise_for_status()
     except Exception as e:
         print(f"[video_agent] Failed to push result for job {payload.job_id}: {e}")
