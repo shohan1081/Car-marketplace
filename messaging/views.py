@@ -84,11 +84,31 @@ class MessageHistoryView(generics.ListAPIView):
 
     def get_queryset(self):
         conversation_id = self.kwargs['conversation_id']
-        # Ensure user is part of the conversation
+        # Automatically mark incoming unread messages as read when opening message history
+        Message.objects.filter(
+            conversation_id=conversation_id, 
+            conversation__participants=self.request.user,
+            is_read=False
+        ).exclude(sender=self.request.user).update(is_read=True)
+
         return Message.objects.filter(
             conversation_id=conversation_id, 
             conversation__participants=self.request.user
         ).order_by('created_at')
+
+class MarkMessagesReadView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, conversation_id):
+        updated_count = Message.objects.filter(
+            conversation_id=conversation_id,
+            conversation__participants=request.user,
+            is_read=False
+        ).exclude(sender=request.user).update(is_read=True)
+        return Response({
+            "message": "Messages marked as read.",
+            "marked_read_count": updated_count
+        }, status=status.HTTP_200_OK)
 
 class SendMessageView(APIView):
     permission_classes = [permissions.IsAuthenticated]
