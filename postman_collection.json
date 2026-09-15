@@ -1,793 +1,1493 @@
 {
-	"info": {
-		"_postman_id": "f5849887-8d8a-4c54-9345-d85c5a082b2d",
-		"name": "Video-Based Auto Marketplace API",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
-	},
-	"item": [
-		{
-			"name": "Users",
-			"item": [
-				{
-					"name": "Buyer Signup",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "formdata",
-							"formdata": [
-								{
-									"key": "full_name",
-									"value": "John Doe",
-									"type": "text"
-								},
-								{
-									"key": "email",
-									"value": "buyer@example.com",
-									"type": "text"
-								},
-								{
-									"key": "location",
-									"value": "New York",
-									"type": "text"
-								},
-								{
-									"key": "password",
-									"value": "password123",
-									"type": "text"
-								},
-								{
-									"key": "re_enter_password",
-									"value": "password123",
-									"type": "text"
-								},
-								{
-									"key": "profile_photo",
-									"type": "file",
-									"src": ""
-								}
-							]
-						},
-						"url": {
-							"raw": "{{base_url}}/api/users/buyer/signup/",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"users",
-								"buyer",
-								"signup",
-								""
-							]
-						}
-					}
-				},
-				{
-					"name": "Dealer Signup",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"full_name\": \"Dealer One\",\n    \"email\": \"dealer@example.com\",\n    \"phone_number\": \"1234567890\",\n    \"designation\": \"Manager\",\n    \"password\": \"password123\",\n    \"re_enter_password\": \"password123\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{base_url}}/api/users/dealer/signup/",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"users",
-								"dealer",
-								"signup",
-								""
-							]
-						}
-					}
-				},
-				{
-					"name": "OTP Verify",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"email\": \"buyer@example.com\",\n    \"code\": \"1234\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{base_url}}/api/users/otp-verify/",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"users",
-								"otp-verify",
-								""
-							]
-						}
-					}
-				},
-				{
-					"name": "Login",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"email\": \"buyer@example.com\",\n    \"password\": \"password123\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{base_url}}/api/users/buyer/login/",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"users",
-								"buyer",
-								"login",
-								""
-							]
-						}
-					}
-				},
-				{
-					"name": "User Profile",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/users/profile/",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"users",
-								"profile",
-								""
-							]
-						}
-					}
-				},
-				{
-					"name": "Buyer Preferences",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"vehicle_types\": [\"sedan\", \"suv\"],\n    \"budget_range\": \"20k-40k\",\n    \"fuel_preference\": \"petrol\",\n    \"city\": \"New York\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{base_url}}/api/users/buyer/preferences/",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"users",
-								"buyer",
-								"preferences",
-								""
-							]
-						}
-					}
-				},
-				{
-					"name": "Dealer Business Info",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "formdata",
-							"formdata": [
-								{
-									"key": "dealership_name",
-									"value": "Auto World",
-									"type": "text"
-								},
-								{
-									"key": "display_name",
-									"value": "AutoWorld NY",
-									"type": "text"
-								},
-								{
-									"key": "specialization",
-									"value": "[\"new_cars\", \"luxury\"]",
-									"type": "text"
-								},
-								{
-									"key": "street_address",
-									"value": "123 Main St",
-									"type": "text"
-								},
-								{
-									"key": "state",
-									"value": "NY",
-									"type": "text"
-								},
-								{
-									"key": "division",
-									"value": "Manhattan",
-									"type": "text"
-								},
-								{
-									"key": "trade_license_number",
-									"value": "TL12345",
-									"type": "text"
-								},
-								{
-									"key": "dealership_license_number",
-									"value": "DL67890",
-									"type": "text"
-								},
-								{
-									"key": "expiry_date",
-									"value": "2027-12-31",
-									"type": "text"
-								},
-								{
-									"key": "dealership_description",
-									"value": "Best cars in town",
-									"type": "text"
-								},
-								{
-									"key": "dealership_license_document",
-									"type": "file",
-									"src": ""
-								},
-								{
-									"key": "dealership_logo",
-									"type": "file",
-									"src": ""
-								},
-								{
-									"key": "cover_image",
-									"type": "file",
-									"src": ""
-								}
-							]
-						},
-						"url": {
-							"raw": "{{base_url}}/api/users/dealer/business-info/",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"users",
-								"dealer",
-								"business-info",
-								""
-							]
-						}
-					}
-				},
-				{
-					"name": "Dealer Profile",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/api/users/dealer/profile/2/",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"users",
-								"dealer",
-								"profile",
-								"2",
-								""
-							]
-						}
-					}
-				},
-				{
-					"name": "Dealer Review",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"rating\": 5,\n    \"comment\": \"Excellent service!\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{base_url}}/api/users/dealer/profile/2/review/",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"users",
-								"dealer",
-								"profile",
-								"2",
-								"review",
-								""
-							]
-						}
-					}
-				}
-			]
-		},
-		{
-			"name": "Vehicles",
-			"item": [
-				{
-					"name": "Newsfeed",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text",
-								"description": "Optional for personalized feed"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/vehicles/newsfeed/",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"vehicles",
-								"newsfeed",
-								""
-							]
-						}
-					}
-				},
-				{
-					"name": "Reel Detail",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/api/vehicles/reels/1/",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"vehicles",
-								"reels",
-								"1",
-								""
-							]
-						}
-					}
-				},
-				{
-					"name": "Create Vehicle",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"name\": \"Toyota\",\n    \"model\": \"Camry\",\n    \"description\": \"Full option Camry 2024\",\n    \"year\": 2024,\n    \"variant\": \"XLE\",\n    \"body_type\": \"sedan\",\n    \"condition\": \"new\",\n    \"mileage_km\": 0,\n    \"color\": \"White\",\n    \"fuel_type\": \"petrol\",\n    \"transmission\": \"automatic\",\n    \"asking_price\": \"35000.00\",\n    \"negotiable\": true,\n    \"listing_duration\": 30,\n    \"location\": \"NYC\",\n    \"engine_type\": \"V6\",\n    \"displacement\": \"3.5L\",\n    \"power\": \"301 hp\",\n    \"torque\": \"267 lb-ft\",\n    \"fuel_tank\": \"60L\",\n    \"doors\": 4,\n    \"seating\": 5,\n    \"weight\": \"3500 lbs\",\n    \"airbags\": true,\n    \"abs\": true,\n    \"stability_control\": true,\n    \"upholstery\": \"Leather\",\n    \"windows\": \"Power\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{base_url}}/api/vehicles/create/",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"vehicles",
-								"create",
-								""
-							]
-						}
-					}
-				},
-				{
-					"name": "Like Reel",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/vehicles/reels/1/like/",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"vehicles",
-								"reels",
-								"1",
-								"like",
-								""
-							]
-						}
-					}
-				},
-				{
-					"name": "Save Reel",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/vehicles/reels/1/save/",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"vehicles",
-								"reels",
-								"1",
-								"save",
-								""
-							]
-						}
-					}
-				},
-				{
-					"name": "Saved Reels List",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/vehicles/reels/saved/",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"vehicles",
-								"reels",
-								"saved",
-								""
-							]
-						}
-					}
-				},
-				{
-					"name": "Share Reel",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/api/vehicles/reels/1/share/",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"vehicles",
-								"reels",
-								"1",
-								"share",
-								""
-							]
-						}
-					}
-				},
-				{
-					"name": "Create Inquiry",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"full_name\": \"John Doe\",\n    \"phone_number\": \"+123456789\",\n    \"offered_price\": \"34000.00\",\n    \"down_payment\": \"5000.00\",\n    \"loan_tenure\": 36,\n    \"credit_estimate\": \"good\",\n    \"additional_notes\": \"Looking for a quick deal.\",\n    \"agreed_to_share\": true\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{base_url}}/api/vehicles/reels/1/inquiry/",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"vehicles",
-								"reels",
-								"1",
-								"inquiry",
-								""
-							]
-						}
-					}
-				}
-			]
-		},
-		{
-			"name": "AI Video Generation",
-			"item": [
-				{
-					"name": "Generate AI Video",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "formdata",
-							"formdata": [
-								{
-									"key": "images",
-									"type": "file",
-									"src": ""
-								},
-								{
-									"key": "images",
-									"type": "file",
-									"src": ""
-								},
-								{
-									"key": "images",
-									"type": "file",
-									"src": ""
-								},
-								{
-									"key": "images",
-									"type": "file",
-									"src": ""
-								},
-								{
-									"key": "images",
-									"type": "file",
-									"src": ""
-								},
-								{
-									"key": "prompt",
-									"value": "driving along a coastal highway at sunset",
-									"type": "text",
-									"description": "Optional. Scene description for the generated video. If omitted, a random default scene is used."
-								},
-								{
-									"key": "duration",
-									"value": "10",
-									"type": "text",
-									"description": "Optional. Video length in seconds (default 10)."
-								},
-								{
-									"key": "resolution",
-									"value": "720p",
-									"type": "text",
-									"description": "Optional. Video resolution (default 720p)."
-								}
-							]
-						},
-						"description": "Upload 5-7 reference images of the vehicle. Dealer must be verified with an active subscription. Response contains a job_id used by the status-check request below.",
-						"url": {
-							"raw": "{{base_url}}/api/vehicles/ai-video/generate/",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"vehicles",
-								"ai-video",
-								"generate",
-								""
-							]
-						}
-					}
-				},
-				{
-					"name": "Check AI Video Status",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"description": "Poll this until status is completed or failed. Set the job_id collection variable from the Generate AI Video response first.",
-						"url": {
-							"raw": "{{base_url}}/api/vehicles/ai-video/status/{{job_id}}/",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"vehicles",
-								"ai-video",
-								"status",
-								"{{job_id}}",
-								""
-							]
-						}
-					}
-				}
-			]
-		},
-		{
-			"name": "Messaging",
-			"item": [
-				{
-					"name": "Conversation List",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/messaging/conversations/",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"messaging",
-								"conversations",
-								""
-							]
-						}
-					}
-				},
-				{
-					"name": "Message History",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/messaging/conversations/1/messages/",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"messaging",
-								"conversations",
-								"1",
-								"messages",
-								""
-							]
-						}
-					}
-				}
-			]
-		}
-	],
-	"event": [
-		{
-			"listen": "prerequest",
-			"script": {
-				"type": "text/javascript",
-				"exec": [
-					""
-				]
-			}
-		},
-		{
-			"listen": "test",
-			"script": {
-				"type": "text/javascript",
-				"exec": [
-					""
-				]
-			}
-		}
-	],
-	"variable": [
-		{
-			"key": "base_url",
-			"value": "http://127.0.0.1:8111",
-			"type": "string"
-		},
-		{
-			"key": "access_token",
-			"value": "your_jwt_access_token_here",
-			"type": "string"
-		},
-		{
-			"key": "job_id",
-			"value": "paste_job_id_from_generate_response",
-			"type": "string"
-		}
-	]
+  "info": {
+    "_postman_id": "f5849887-8d8a-4c54-9345-d85c5a082b2d",
+    "name": "Nory - Video-Based Auto Marketplace API",
+    "description": "Complete Postman collection for Nory Video-Based Auto Marketplace backend.\nIncludes automated token propagation, AI video lifecycle, audio selection, manual/AI reel posting, draft publishing, newsfeed, interactions, and messaging.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Authentication & Users",
+      "item": [
+        {
+          "name": "Dealer Signup",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"full_name\": \"Premium Motors\",\n    \"email\": \"dealer_test@example.com\",\n    \"phone_number\": \"+15551234567\",\n    \"designation\": \"General Manager\",\n    \"password\": \"Password123!\",\n    \"re_enter_password\": \"Password123!\"\n}"
+            },
+            "url": "{{base_url}}/api/users/dealer/signup/"
+          }
+        },
+        {
+          "name": "Buyer Signup",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"full_name\": \"Alex Buyer\",\n    \"email\": \"buyer_test@example.com\",\n    \"location\": \"Miami, FL\",\n    \"password\": \"Password123!\",\n    \"re_enter_password\": \"Password123!\"\n}"
+            },
+            "url": "{{base_url}}/api/users/buyer/signup/"
+          }
+        },
+        {
+          "name": "OTP Verify (Auto-saves Token)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.access) {",
+                  "    pm.collectionVariables.set('access_token', jsonData.access);",
+                  "    console.log('Access token saved to collection variable');",
+                  "}",
+                  "if (jsonData.refresh) {",
+                  "    pm.collectionVariables.set('refresh_token', jsonData.refresh);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"dealer_test@example.com\",\n    \"code\": \"1234\"\n}"
+            },
+            "url": "{{base_url}}/api/users/otp-verify/"
+          }
+        },
+        {
+          "name": "Dealer Login (Auto-saves Token)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.access) {",
+                  "    pm.collectionVariables.set('access_token', jsonData.access);",
+                  "    console.log('Dealer access token saved');",
+                  "}",
+                  "if (jsonData.refresh) {",
+                  "    pm.collectionVariables.set('refresh_token', jsonData.refresh);",
+                  "}",
+                  "if (jsonData.user_details && jsonData.user_details.id) {",
+                  "    pm.collectionVariables.set('dealer_id', jsonData.user_details.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"wijepon741@daugr.com\",\n    \"password\": \"Password123!\"\n}"
+            },
+            "url": "{{base_url}}/api/users/dealer/login/"
+          }
+        },
+        {
+          "name": "Buyer Login (Auto-saves Token)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.access) {",
+                  "    pm.collectionVariables.set('access_token', jsonData.access);",
+                  "    console.log('Buyer access token saved');",
+                  "}",
+                  "if (jsonData.refresh) {",
+                  "    pm.collectionVariables.set('refresh_token', jsonData.refresh);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"buyer@example.com\",\n    \"password\": \"Password123!\"\n}"
+            },
+            "url": "{{base_url}}/api/users/buyer/login/"
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.access) {",
+                  "    pm.collectionVariables.set('access_token', jsonData.access);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"refresh\": \"{{refresh_token}}\"\n}"
+            },
+            "url": "{{base_url}}/api/users/token/refresh/"
+          }
+        },
+        {
+          "name": "Get User Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": "{{base_url}}/api/users/profile/"
+          }
+        },
+        {
+          "name": "Update User Profile",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"full_name\": \"Premium Motors Miami\",\n    \"location\": \"Miami, FL\",\n    \"phone_number\": \"+13055551234\"\n}"
+            },
+            "url": "{{base_url}}/api/users/profile/"
+          }
+        },
+        {
+          "name": "Submit Dealer Business Info",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "dealership_name",
+                  "value": "Apex Supercars",
+                  "type": "text"
+                },
+                {
+                  "key": "display_name",
+                  "value": "Apex Motors",
+                  "type": "text"
+                },
+                {
+                  "key": "specialization",
+                  "value": "[\"luxury\", \"used_cars\"]",
+                  "type": "text"
+                },
+                {
+                  "key": "street_address",
+                  "value": "777 Brickell Ave",
+                  "type": "text"
+                },
+                {
+                  "key": "state",
+                  "value": "Florida",
+                  "type": "text"
+                },
+                {
+                  "key": "division",
+                  "value": "Miami",
+                  "type": "text"
+                },
+                {
+                  "key": "business_website",
+                  "value": "https://apexsupercars.com",
+                  "type": "text"
+                },
+                {
+                  "key": "trade_license_number",
+                  "value": "TL-998877",
+                  "type": "text"
+                },
+                {
+                  "key": "dealership_license_number",
+                  "value": "DL-554433",
+                  "type": "text"
+                },
+                {
+                  "key": "expiry_date",
+                  "value": "2028-12-31",
+                  "type": "text"
+                },
+                {
+                  "key": "dealership_description",
+                  "value": "South Florida premier performance auto dealer.",
+                  "type": "text"
+                },
+                {
+                  "key": "dealership_license_document",
+                  "type": "file",
+                  "src": ""
+                },
+                {
+                  "key": "dealership_logo",
+                  "type": "file",
+                  "src": ""
+                },
+                {
+                  "key": "cover_image",
+                  "type": "file",
+                  "src": ""
+                }
+              ]
+            },
+            "url": "{{base_url}}/api/users/dealer/business-info/"
+          }
+        },
+        {
+          "name": "Get Dealer Business Info",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": "{{base_url}}/api/users/dealer/business-info/"
+          }
+        },
+        {
+          "name": "Get Dealer Public Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/api/users/dealer-profile/{{dealer_id}}/"
+          }
+        },
+        {
+          "name": "Follow / Unfollow Dealer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": "{{base_url}}/api/users/dealer/{{dealer_id}}/follow/"
+          }
+        },
+        {
+          "name": "Review Dealer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"rating\": 5,\n    \"comment\": \"Outstanding inventory and seamless buying experience!\"\n}"
+            },
+            "url": "{{base_url}}/api/users/dealer-review/{{dealer_id}}/"
+          }
+        },
+        {
+          "name": "Search Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/users/search/?q=dealer",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "search",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "dealer"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Subscriptions",
+      "item": [
+        {
+          "name": "List Subscription Packages",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/api/subscriptions/packages/"
+          }
+        },
+        {
+          "name": "Verify Purchase (Apple / Google IAP)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"platform\": \"google\",\n    \"product_id\": \"com.nory.dealer.monthly\",\n    \"token\": \"sample_store_purchase_token_here\"\n}"
+            },
+            "url": "{{base_url}}/api/subscriptions/verify/"
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Music Library (Admin Audio)",
+      "item": [
+        {
+          "name": "Get Audio / Music List",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (Array.isArray(jsonData) && jsonData.length > 0) {",
+                  "    pm.collectionVariables.set('music_id', jsonData[0].id);",
+                  "    console.log('Selected default music_id: ' + jsonData[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "description": "Fetches audio tracks uploaded by admin. Dealers choose a track to add background audio to their reels.",
+            "url": "{{base_url}}/api/vehicles/music/"
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. AI Video Generation",
+      "item": [
+        {
+          "name": "1. Generate AI Video (Auto-saves job_id)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.job_id) {",
+                  "    pm.collectionVariables.set('job_id', jsonData.job_id);",
+                  "    console.log('AI Video job_id saved: ' + jsonData.job_id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "images",
+                  "type": "file",
+                  "src": "",
+                  "description": "Car photo 1 (front 3/4 angle)"
+                },
+                {
+                  "key": "images",
+                  "type": "file",
+                  "src": "",
+                  "description": "Car photo 2 (side profile)"
+                },
+                {
+                  "key": "images",
+                  "type": "file",
+                  "src": "",
+                  "description": "Car photo 3 (rear)"
+                },
+                {
+                  "key": "prompt",
+                  "value": "driving smoothly along a coastal highway at sunset",
+                  "type": "text"
+                },
+                {
+                  "key": "duration",
+                  "value": "10",
+                  "type": "text"
+                },
+                {
+                  "key": "resolution",
+                  "value": "720p",
+                  "type": "text"
+                }
+              ]
+            },
+            "description": "Uploads 1-7 car reference photos to generate a cinematic AI video. Dealer must be verified and have an active subscription.",
+            "url": "{{base_url}}/api/vehicles/ai-video/generate/"
+          }
+        },
+        {
+          "name": "2. Check AI Video Status",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "console.log('Current status: ' + jsonData.status);",
+                  "if (jsonData.video_url || jsonData.generated_video) {",
+                  "    console.log('Video ready at: ' + (jsonData.generated_video || jsonData.video_url));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "description": "Poll this endpoint until status becomes 'completed'. Once completed, use {{job_id}} to create the vehicle reel.",
+            "url": "{{base_url}}/api/vehicles/ai-video/status/{{job_id}}/"
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Vehicles & Reel Creation",
+      "item": [
+        {
+          "name": "Create Reel (via AI Generated Video)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.id) {",
+                  "    pm.collectionVariables.set('vehicle_id', jsonData.id);",
+                  "    console.log('Saved vehicle_id: ' + jsonData.id);",
+                  "}",
+                  "if (jsonData.reels && jsonData.reels.length > 0) {",
+                  "    pm.collectionVariables.set('reel_id', jsonData.reels[0].id);",
+                  "    console.log('Saved reel_id: ' + jsonData.reels[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Porsche 911\",\n    \"model\": \"GT3 Touring\",\n    \"description\": \"Naturally aspirated 4.0L flat-six, 6-speed GT sport manual transmission.\",\n    \"year\": 2024,\n    \"variant\": \"Touring\",\n    \"body_type\": \"coupe\",\n    \"condition\": \"new\",\n    \"mileage_km\": 150,\n    \"color\": \"Chalk\",\n    \"fuel_type\": \"petrol\",\n    \"transmission\": \"manual\",\n    \"asking_price\": \"225000.00\",\n    \"negotiable\": false,\n    \"listing_duration\": 30,\n    \"location\": \"Miami, FL\",\n    \"engine_type\": \"Naturally Aspirated Flat-6\",\n    \"displacement\": \"4.0L\",\n    \"power\": \"502 hp\",\n    \"torque\": \"346 lb-ft\",\n    \"fuel_tank\": \"64L\",\n    \"doors\": 2,\n    \"seating\": 2,\n    \"weight\": \"3164 lbs\",\n    \"airbags\": true,\n    \"abs\": true,\n    \"stability_control\": true,\n    \"parking_sensors\": true,\n    \"camera\": true,\n    \"ac\": true,\n    \"infotainment\": true,\n    \"audio\": true,\n    \"upholstery\": \"Leather & Alcantara\",\n    \"windows\": \"Power\",\n    \"job_id\": \"{{job_id}}\",\n    \"background_music\": \"{{music_id}}\",\n    \"is_draft\": true\n}"
+            },
+            "description": "Creates a vehicle reel using an already generated AI video (via job_id). Supports background_music and is_draft (true for draft, false for live). Ultra-fast zero-copy server file linkage.",
+            "url": "{{base_url}}/api/vehicles/create/"
+          }
+        },
+        {
+          "name": "Create Reel (Manual Video Upload)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.id) {",
+                  "    pm.collectionVariables.set('vehicle_id', jsonData.id);",
+                  "}",
+                  "if (jsonData.reels && jsonData.reels.length > 0) {",
+                  "    pm.collectionVariables.set('reel_id', jsonData.reels[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "video_file",
+                  "type": "file",
+                  "src": "",
+                  "description": "Reel MP4 video file"
+                },
+                {
+                  "key": "background_music",
+                  "value": "{{music_id}}",
+                  "type": "text"
+                },
+                {
+                  "key": "is_draft",
+                  "value": "false",
+                  "type": "text"
+                },
+                {
+                  "key": "name",
+                  "value": "BMW M3",
+                  "type": "text"
+                },
+                {
+                  "key": "model",
+                  "value": "Competition",
+                  "type": "text"
+                },
+                {
+                  "key": "description",
+                  "value": "Mint condition M3 Competition with M xDrive.",
+                  "type": "text"
+                },
+                {
+                  "key": "year",
+                  "value": "2023",
+                  "type": "text"
+                },
+                {
+                  "key": "variant",
+                  "value": "M xDrive",
+                  "type": "text"
+                },
+                {
+                  "key": "body_type",
+                  "value": "sedan",
+                  "type": "text"
+                },
+                {
+                  "key": "condition",
+                  "value": "used",
+                  "type": "text"
+                },
+                {
+                  "key": "mileage_km",
+                  "value": "12000",
+                  "type": "text"
+                },
+                {
+                  "key": "color",
+                  "value": "Isle of Man Green",
+                  "type": "text"
+                },
+                {
+                  "key": "fuel_type",
+                  "value": "petrol",
+                  "type": "text"
+                },
+                {
+                  "key": "transmission",
+                  "value": "automatic",
+                  "type": "text"
+                },
+                {
+                  "key": "asking_price",
+                  "value": "82000.00",
+                  "type": "text"
+                },
+                {
+                  "key": "negotiable",
+                  "value": "true",
+                  "type": "text"
+                },
+                {
+                  "key": "listing_duration",
+                  "value": "30",
+                  "type": "text"
+                },
+                {
+                  "key": "location",
+                  "value": "Miami, FL",
+                  "type": "text"
+                },
+                {
+                  "key": "engine_type",
+                  "value": "Twin-Turbo I6",
+                  "type": "text"
+                },
+                {
+                  "key": "displacement",
+                  "value": "3.0L",
+                  "type": "text"
+                },
+                {
+                  "key": "power",
+                  "value": "503 hp",
+                  "type": "text"
+                },
+                {
+                  "key": "torque",
+                  "value": "479 lb-ft",
+                  "type": "text"
+                },
+                {
+                  "key": "fuel_tank",
+                  "value": "59L",
+                  "type": "text"
+                },
+                {
+                  "key": "doors",
+                  "value": "4",
+                  "type": "text"
+                },
+                {
+                  "key": "seating",
+                  "value": "5",
+                  "type": "text"
+                },
+                {
+                  "key": "weight",
+                  "value": "3890 lbs",
+                  "type": "text"
+                },
+                {
+                  "key": "upholstery",
+                  "value": "Merino Leather",
+                  "type": "text"
+                },
+                {
+                  "key": "windows",
+                  "value": "Power",
+                  "type": "text"
+                }
+              ]
+            },
+            "description": "Manual reel creation uploading a direct .mp4 video file with admin audio track.",
+            "url": "{{base_url}}/api/vehicles/create/"
+          }
+        },
+        {
+          "name": "Preview Vehicle Listing",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Audi RS6 Avant\",\n    \"model\": \"RS6\",\n    \"year\": 2024,\n    \"asking_price\": \"135000.00\",\n    \"job_id\": \"{{job_id}}\"\n}"
+            },
+            "url": "{{base_url}}/api/vehicles/preview/"
+          }
+        },
+        {
+          "name": "Publish Draft Vehicle",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "description": "Publishes a previously saved draft vehicle listing so it goes live to the public newsfeed.",
+            "url": "{{base_url}}/api/vehicles/publish/{{vehicle_id}}/"
+          }
+        },
+        {
+          "name": "Get Vehicle Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": "{{base_url}}/api/vehicles/{{vehicle_id}}/"
+          }
+        },
+        {
+          "name": "Update Vehicle Details",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"asking_price\": \"219000.00\",\n    \"negotiable\": true\n}"
+            },
+            "url": "{{base_url}}/api/vehicles/{{vehicle_id}}/"
+          }
+        },
+        {
+          "name": "Delete Vehicle",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": "{{base_url}}/api/vehicles/{{vehicle_id}}/"
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Dealer Dashboard & Inventory",
+      "item": [
+        {
+          "name": "Dealer Dashboard Analytics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "description": "Returns total vehicles, active reels, draft listings, total views, views in last 30 days, likes, and inquiries.",
+            "url": "{{base_url}}/api/vehicles/dashboard/"
+          }
+        },
+        {
+          "name": "Dealer Inventory (All Reels & Drafts)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "description": "Returns all reels belonging to the dealer, with is_draft flag indicating whether they are published or draft.",
+            "url": "{{base_url}}/api/vehicles/inventory/"
+          }
+        },
+        {
+          "name": "Dealer Followers List",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": "{{base_url}}/api/users/dealer/followers/"
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Newsfeed & Interactions",
+      "item": [
+        {
+          "name": "Public Newsfeed",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (Array.isArray(jsonData) && jsonData.length > 0) {",
+                  "    pm.collectionVariables.set('reel_id', jsonData[0].id);",
+                  "    console.log('Set active reel_id: ' + jsonData[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "description": "Optional"
+              }
+            ],
+            "description": "Returns video reels for published vehicles from verified dealers. Includes background_music audio object.",
+            "url": "{{base_url}}/api/vehicles/newsfeed/"
+          }
+        },
+        {
+          "name": "Search Vehicles",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/vehicles/search/?q=Porsche",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "vehicles",
+                "search",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Porsche"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Reel Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "description": "Optional"
+              }
+            ],
+            "url": "{{base_url}}/api/vehicles/reels/{{reel_id}}/"
+          }
+        },
+        {
+          "name": "Like / Unlike Reel",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": "{{base_url}}/api/vehicles/reels/{{reel_id}}/like/"
+          }
+        },
+        {
+          "name": "Save / Bookmark Reel",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": "{{base_url}}/api/vehicles/reels/{{reel_id}}/save/"
+          }
+        },
+        {
+          "name": "List Saved Reels",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": "{{base_url}}/api/vehicles/reels/saved/"
+          }
+        },
+        {
+          "name": "Share Reel (Increment Share Count)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/api/vehicles/reels/{{reel_id}}/share/"
+          }
+        },
+        {
+          "name": "View Reel (Increment View Count & Audit Log)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "description": "Optional"
+              }
+            ],
+            "description": "Increments view count and logs a ReelView audit record for 30-day dealer performance metrics.",
+            "url": "{{base_url}}/api/vehicles/reels/{{reel_id}}/view/"
+          }
+        },
+        {
+          "name": "List Reel Comments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/api/vehicles/reels/{{reel_id}}/comments/"
+          }
+        },
+        {
+          "name": "Add Reel Comment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.id) {",
+                  "    pm.collectionVariables.set('comment_id', jsonData.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"text\": \"Is this car available for a test drive this weekend?\"\n}"
+            },
+            "url": "{{base_url}}/api/vehicles/reels/{{reel_id}}/comments/"
+          }
+        },
+        {
+          "name": "Delete Comment",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": "{{base_url}}/api/vehicles/comments/{{comment_id}}/"
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. Financing Inquiries (Leads)",
+      "item": [
+        {
+          "name": "Submit Financing Inquiry",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.conversation_id) {",
+                  "    pm.collectionVariables.set('conversation_id', jsonData.conversation_id);",
+                  "    console.log('Chat conversation created with ID: ' + jsonData.conversation_id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"full_name\": \"Alex Buyer\",\n    \"phone_number\": \"+13055557788\",\n    \"offered_price\": \"220000.00\",\n    \"down_payment\": \"45000.00\",\n    \"loan_tenure\": 36,\n    \"credit_estimate\": \"good\",\n    \"additional_notes\": \"Ready to finance immediately with Tier 1 credit.\",\n    \"agreed_to_share\": true\n}"
+            },
+            "description": "Submits lead financing inquiry. Auto-creates a messaging conversation and notifies the dealer.",
+            "url": "{{base_url}}/api/vehicles/reels/{{reel_id}}/inquiry/"
+          }
+        },
+        {
+          "name": "Buyer Inquiries List",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": "{{base_url}}/api/vehicles/buyer/inquiries/"
+          }
+        },
+        {
+          "name": "Dealer Inquiries List",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (Array.isArray(jsonData) && jsonData.length > 0) {",
+                  "    pm.collectionVariables.set('inquiry_id', jsonData[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": "{{base_url}}/api/vehicles/inquiries/"
+          }
+        },
+        {
+          "name": "Dealer Inquiry Detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": "{{base_url}}/api/vehicles/inquiries/{{inquiry_id}}/"
+          }
+        },
+        {
+          "name": "Dealer Accept Inquiry",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "description": "Accepts lead inquiry and automatically sends notification message into the conversation thread.",
+            "url": "{{base_url}}/api/vehicles/inquiries/{{inquiry_id}}/accept/"
+          }
+        },
+        {
+          "name": "Dealer Reject Inquiry",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": "{{base_url}}/api/vehicles/inquiries/{{inquiry_id}}/reject/"
+          }
+        }
+      ]
+    },
+    {
+      "name": "9. Messaging & Chat",
+      "item": [
+        {
+          "name": "Start Chat from Reel",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.conversation_id) {",
+                  "    pm.collectionVariables.set('conversation_id', jsonData.conversation_id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"reel_id\": \"{{reel_id}}\"\n}"
+            },
+            "url": "{{base_url}}/api/messaging/start-chat/"
+          }
+        },
+        {
+          "name": "Start Chat General (with User)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.conversation_id) {",
+                  "    pm.collectionVariables.set('conversation_id', jsonData.conversation_id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"user_id\": \"{{dealer_id}}\"\n}"
+            },
+            "url": "{{base_url}}/api/messaging/start-chat-general/"
+          }
+        },
+        {
+          "name": "List Conversations",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (Array.isArray(jsonData) && jsonData.length > 0) {",
+                  "    pm.collectionVariables.set('conversation_id', jsonData[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": "{{base_url}}/api/messaging/conversations/"
+          }
+        },
+        {
+          "name": "Get Message History",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": "{{base_url}}/api/messaging/conversations/{{conversation_id}}/messages/"
+          }
+        },
+        {
+          "name": "Mark Messages Read",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": "{{base_url}}/api/messaging/conversations/{{conversation_id}}/read/"
+          }
+        },
+        {
+          "name": "Send Message (REST)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"message\": \"Hi, I am interested in this vehicle. Can we schedule an inspection?\"\n}"
+            },
+            "url": "{{base_url}}/api/messaging/conversations/{{conversation_id}}/messages/send/"
+          }
+        },
+        {
+          "name": "List Notifications",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (Array.isArray(jsonData) && jsonData.length > 0) {",
+                  "    pm.collectionVariables.set('notification_id', jsonData[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": "{{base_url}}/api/messaging/notifications/"
+          }
+        },
+        {
+          "name": "Mark Notification Read",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"is_read\": true\n}"
+            },
+            "url": "{{base_url}}/api/messaging/notifications/{{notification_id}}/"
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:8000",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refresh_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "job_id",
+      "value": "3a3b55ca-0390-40ca-92ef-bfa0d7a862af",
+      "type": "string"
+    },
+    {
+      "key": "music_id",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "vehicle_id",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "reel_id",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "dealer_id",
+      "value": "8",
+      "type": "string"
+    },
+    {
+      "key": "inquiry_id",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "conversation_id",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "comment_id",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "notification_id",
+      "value": "1",
+      "type": "string"
+    }
+  ]
 }
