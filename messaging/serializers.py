@@ -17,15 +17,40 @@ class MessageSerializer(serializers.ModelSerializer):
 class ConversationSerializer(serializers.ModelSerializer):
     last_message = serializers.SerializerMethodField()
     other_participant = serializers.SerializerMethodField()
+    unread_count = serializers.SerializerMethodField()
+    reel_details = serializers.SerializerMethodField()
 
     class Meta:
         model = Conversation
-        fields = ['id', 'reel', 'other_participant', 'last_message', 'updated_at']
+        fields = ['id', 'reel', 'reel_details', 'other_participant', 'last_message', 'unread_count', 'updated_at']
 
     def get_last_message(self, obj):
         last_msg = obj.messages.last()
         if last_msg:
             return MessageSerializer(last_msg).data
+        return None
+
+    def get_unread_count(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return obj.messages.filter(is_read=False).exclude(sender=request.user).count()
+        return 0
+
+    def get_reel_details(self, obj):
+        if obj.reel and obj.reel.vehicle:
+            request = self.context.get('request')
+            video_url = None
+            if obj.reel.video_file:
+                video_url = obj.reel.video_file.url
+                if request:
+                    video_url = request.build_absolute_uri(video_url)
+            return {
+                'id': obj.reel.id,
+                'vehicle_name': obj.reel.vehicle.name,
+                'vehicle_year': obj.reel.vehicle.year,
+                'asking_price': str(obj.reel.vehicle.asking_price),
+                'video_file': video_url
+            }
         return None
 
     def get_other_participant(self, obj):
