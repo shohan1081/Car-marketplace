@@ -1,4 +1,5 @@
 import os
+import shutil
 from rest_framework import serializers
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.core.files.base import ContentFile
@@ -9,12 +10,25 @@ User = get_user_model()
 
 
 def _copy_ai_generated_video_to_reel(reel, generation):
-    """Copies a completed AIVideoGeneration's file onto a reel's video_file, avoiding a client-side re-upload."""
-    reel.video_file.save(
-        os.path.basename(generation.generated_video.name),
-        ContentFile(generation.generated_video.read()),
-        save=False
-    )
+    """Copies a completed AIVideoGeneration's file onto a reel's video_file, avoiding in-memory buffering."""
+    src_file = generation.generated_video
+    if not src_file:
+        return
+
+    dest_filename = os.path.basename(src_file.name)
+    target_rel_path = reel.video_file.field.generate_filename(reel, dest_filename)
+
+    try:
+        # Fast local filesystem copy (zero memory allocation)
+        src_path = src_file.path
+        target_full_path = reel.video_file.storage.path(target_rel_path)
+        os.makedirs(os.path.dirname(target_full_path), exist_ok=True)
+        shutil.copy2(src_path, target_full_path)
+        reel.video_file.name = target_rel_path
+    except Exception:
+        # Fallback for cloud/remote storage backends
+        src_file.open('rb')
+        reel.video_file.save(dest_filename, src_file, save=False)
 
 class MusicSerializer(serializers.ModelSerializer):
     class Meta:
@@ -22,6 +36,8 @@ class MusicSerializer(serializers.ModelSerializer):
         fields = ['id', 'title', 'file']
 
 class DealerVehicleReelSerializer(serializers.ModelSerializer):
+    background_music = MusicSerializer(read_only=True)
+
     class Meta:
         model = DealerVehicleReel
         fields = ['id', 'video_file', 'background_music']
@@ -36,7 +52,7 @@ class VehicleSerializer(serializers.ModelSerializer):
     # Alternative to uploading video_file: the job_id of a dealer's own
     # completed AIVideoGeneration. Lets the app skip downloading the
     # generated video and re-uploading it — we copy the file server-side.
-    ai_video_generation = serializers.UUIDField(write_only=True, required=False, allow_null=True)
+    ai_video_generation = serializers.CharField(write_only=True, required=False, allow_null=True)
     reels = DealerVehicleReelSerializer(many=True, read_only=True)
 
     class Meta:
@@ -46,7 +62,17 @@ class VehicleSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         video_file = data.get('video_file')
-        job_id = data.get('ai_video_generation')
+        # Allow flexible field names for the AI video: 'ai_video_generation', 'job_id', 'ai_video_job_id', or 'video_url'
+        job_id = (
+            data.get('ai_video_generation')
+            or (self.initial_data.get('job_id') if hasattr(self, 'initial_data') and isinstance(self.initial_data, dict) else None)
+            or (self.initial_data.get('ai_video_job_id') if hasattr(self, 'initial_data') and isinstance(self.initial_data, dict) else None)
+        )
+        if not job_id and hasattr(self, 'initial_data') and isinstance(self.initial_data, dict) and self.initial_data.get('video_url'):
+            import re
+            match = re.search(r'ai_gen_([a-f0-9\-]{36})\.mp4', str(self.initial_data.get('video_url')))
+            if match:
+                job_id = match.group(1)
 
         if video_file and job_id:
             raise serializers.ValidationError("Provide only one of 'video_file' or 'ai_video_generation', not both.")
@@ -68,7 +94,6 @@ class VehicleSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({"ai_video_generation": "This AI video generation is not completed yet."})
 
             data['_ai_video_generation_obj'] = generation
-
         return data
 
     def create(self, validated_data):
@@ -146,6 +171,7 @@ class ReelNewsfeedSerializer(serializers.ModelSerializer):
     dealer_rating = serializers.DecimalField(source='dealer.business_info.rating', max_digits=3, decimal_places=2, read_only=True)
     dealer_reviews = serializers.IntegerField(source='dealer.business_info.review_count', read_only=True)
     vehicle_details = VehicleMinimalSerializer(source='vehicle', read_only=True)
+    background_music = MusicSerializer(read_only=True)
     likes_count = serializers.IntegerField(source='likes.count', read_only=True)
     is_liked = serializers.SerializerMethodField()
     is_saved = serializers.SerializerMethodField()
@@ -154,7 +180,12 @@ class ReelNewsfeedSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = DealerVehicleReel
-        fields = ['id', 'video_file', 'dealer_id', 'dealer_name', 'dealer_profile_photo', 'dealer_rating', 'dealer_reviews', 'dealer_is_followed', 'vehicle_details', 'likes_count', 'share_count', 'view_count', 'comments_count', 'is_liked', 'is_saved', 'created_at']
+        fields = [
+            'id', 'video_file', 'background_music', 'dealer_id', 'dealer_name',
+            'dealer_profile_photo', 'dealer_rating', 'dealer_reviews',
+            'dealer_is_followed', 'vehicle_details', 'likes_count', 'share_count',
+            'view_count', 'comments_count', 'is_liked', 'is_saved', 'created_at'
+        ]
 
     def get_is_liked(self, obj):
         user = self.context.get('request').user
@@ -186,6 +217,7 @@ class SavedReelListSerializer(serializers.ModelSerializer):
 class ReelDetailSerializer(serializers.ModelSerializer):
     dealer = DealerMinimalSerializer(read_only=True)
     vehicle = VehicleSerializer(read_only=True)
+    background_music = MusicSerializer(read_only=True)
     likes_count = serializers.IntegerField(source='likes.count', read_only=True)
     saves_count = serializers.IntegerField(source='saves.count', read_only=True)
     suggested_reels = serializers.SerializerMethodField()
@@ -256,13 +288,55 @@ class ReelDetailSerializer(serializers.ModelSerializer):
 
 class VehicleInquirySerializer(serializers.ModelSerializer):
     vehicle_title = serializers.CharField(source='reel.vehicle.name', read_only=True)
-    dealer_name = serializers.CharField(source='reel.dealer.full_name', read_only=True)
+    vehicle_id = serializers.IntegerField(source='reel.vehicle.id', read_only=True)
+    vehicle_year = serializers.IntegerField(source='reel.vehicle.year', read_only=True)
     vehicle_price = serializers.DecimalField(source='reel.vehicle.asking_price', max_digits=12, decimal_places=2, read_only=True)
+    dealer_id = serializers.IntegerField(source='reel.dealer.id', read_only=True)
+    dealer_name = serializers.CharField(source='reel.dealer.full_name', read_only=True)
+    dealer_photo = serializers.SerializerMethodField()
+    reel_video = serializers.SerializerMethodField()
+    conversation_id = serializers.SerializerMethodField()
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    loan_tenure_display = serializers.CharField(source='get_loan_tenure_display', read_only=True)
+    credit_estimate_display = serializers.CharField(source='get_credit_estimate_display', read_only=True)
 
     class Meta:
         model = VehicleInquiry
         fields = '__all__'
         read_only_fields = ['buyer', 'reel']
+
+    def get_conversation_id(self, obj):
+        from messaging.models import Conversation
+        if obj.reel and obj.buyer and obj.reel.dealer:
+            conv = Conversation.objects.filter(
+                reel=obj.reel,
+                participants=obj.buyer
+            ).filter(participants=obj.reel.dealer).first()
+            return conv.id if conv else None
+        return None
+
+    def get_dealer_photo(self, obj):
+        if not obj.reel or not obj.reel.dealer:
+            return None
+        dealer = obj.reel.dealer
+        request = self.context.get('request')
+        url = None
+        if hasattr(dealer, 'business_info') and dealer.business_info and dealer.business_info.dealership_logo:
+            url = dealer.business_info.dealership_logo.url
+        elif dealer.profile_photo:
+            url = dealer.profile_photo.url
+        if url and request:
+            return request.build_absolute_uri(url)
+        return url
+
+    def get_reel_video(self, obj):
+        if obj.reel and obj.reel.video_file:
+            request = self.context.get('request')
+            url = obj.reel.video_file.url
+            if request:
+                return request.build_absolute_uri(url)
+            return url
+        return None
 
     def validate(self, data):
         reel = self.context.get('reel')
