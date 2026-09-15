@@ -176,8 +176,10 @@ class UserProfileSerializer(serializers.ModelSerializer):
     subscription = serializers.SerializerMethodField()
     activities = serializers.SerializerMethodField()
     saved_reels_count = serializers.SerializerMethodField()
+    saved_reels = serializers.SerializerMethodField()
     unread_messages_count = serializers.SerializerMethodField()
     inquiry_count = serializers.SerializerMethodField()
+    recent_inquiries = serializers.SerializerMethodField()
     verification_status = serializers.SerializerMethodField()
     following_count = serializers.SerializerMethodField()
 
@@ -186,8 +188,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'full_name', 'email', 'phone_number', 'designation', 'profile_photo', 'location', 
             'preferences', 'business_info', 'subscription',
-            'activities', 'saved_reels_count', 'unread_messages_count', 'inquiry_count',
-            'verification_status', 'is_buyer', 'is_dealer', 'following_count'
+            'activities', 'saved_reels_count', 'saved_reels', 'unread_messages_count', 'inquiry_count',
+            'recent_inquiries', 'verification_status', 'is_buyer', 'is_dealer', 'following_count'
         ]
 
     def get_subscription(self, obj):
@@ -214,6 +216,12 @@ class UserProfileSerializer(serializers.ModelSerializer):
         from vehicles.models import SavedReel
         return SavedReel.objects.filter(user=obj).count()
 
+    def get_saved_reels(self, obj):
+        from vehicles.models import SavedReel
+        from vehicles.serializers import SavedReelListSerializer
+        saves = SavedReel.objects.filter(user=obj).order_by('-created_at')[:10]
+        return SavedReelListSerializer(saves, many=True, context=self.context).data
+
     def get_unread_messages_count(self, obj):
         from messaging.models import Message
         return Message.objects.filter(
@@ -224,6 +232,12 @@ class UserProfileSerializer(serializers.ModelSerializer):
     def get_inquiry_count(self, obj):
         from vehicles.models import VehicleInquiry
         return VehicleInquiry.objects.filter(buyer=obj).count()
+
+    def get_recent_inquiries(self, obj):
+        from vehicles.models import VehicleInquiry
+        from vehicles.serializers import VehicleInquirySerializer
+        inquiries = VehicleInquiry.objects.filter(buyer=obj).order_by('-created_at')[:5]
+        return VehicleInquirySerializer(inquiries, many=True, context=self.context).data
 
     def get_activities(self, obj):
         from vehicles.models import Like, SavedReel
