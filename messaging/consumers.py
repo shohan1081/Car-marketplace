@@ -36,6 +36,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             self.channel_name
         )
         await self.accept()
+        await self.mark_messages_read(self.user, self.conversation_id)
 
     async def disconnect(self, close_code):
         if hasattr(self, 'room_group_name'):
@@ -81,6 +82,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
             return msg
         except Conversation.DoesNotExist:
             return None
+
+    @database_sync_to_async
+    def mark_messages_read(self, user, conversation_id):
+        Message.objects.filter(
+            conversation_id=conversation_id,
+            is_read=False
+        ).exclude(sender=user).update(is_read=True)
 
 class NotificationConsumer(AsyncWebsocketConsumer):
     async def connect(self):
