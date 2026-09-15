@@ -300,21 +300,6 @@ class ShareReelView(APIView):
         except DealerVehicleReel.DoesNotExist:
             return Response({"error": "Reel not found."}, status=status.HTTP_404_NOT_FOUND)
 
-class ReelViewCountView(APIView):
-    permission_classes = [permissions.AllowAny]
-
-    def post(self, request, pk):
-        try:
-            reel = DealerVehicleReel.objects.get(pk=pk)
-            reel.view_count += 1
-            reel.save()
-            return Response({
-                "message": "View count incremented.",
-                "view_count": reel.view_count
-            }, status=status.HTTP_200_OK)
-        except DealerVehicleReel.DoesNotExist:
-            return Response({"error": "Reel not found."}, status=status.HTTP_404_NOT_FOUND)
-
 class MusicListView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -349,7 +334,11 @@ class VehicleCreateView(APIView):
         
         serializer = VehicleSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
-            is_draft = request.query_params.get('draft', 'false').lower() == 'true'
+            is_draft_val = request.data.get('is_draft')
+            if is_draft_val is not None:
+                is_draft = str(is_draft_val).lower() in ['true', '1', 'yes']
+            else:
+                is_draft = request.query_params.get('draft', 'false').lower() == 'true'
             vehicle = serializer.save(dealer=request.user, is_draft=is_draft)
             return Response(VehicleSerializer(vehicle, context={'request': request}).data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -431,7 +420,7 @@ class BuyerInquiryListView(APIView):
 
     def get(self, request):
         inquiries = VehicleInquiry.objects.filter(buyer=request.user).order_by('-created_at')
-        serializer = VehicleInquirySerializer(inquiries, many=True)
+        serializer = VehicleInquirySerializer(inquiries, many=True, context={'request': request})
         return Response(serializer.data)
 
 class VehicleInquiryCreateView(APIView):
@@ -488,7 +477,7 @@ class DealerInquiryListView(APIView):
             return Response({"error": "Only dealers can access inquiries."}, status=status.HTTP_403_FORBIDDEN)
         
         inquiries = VehicleInquiry.objects.filter(reel__dealer=request.user).order_by('-created_at')
-        serializer = VehicleInquirySerializer(inquiries, many=True)
+        serializer = VehicleInquirySerializer(inquiries, many=True, context={'request': request})
         return Response(serializer.data)
 
 class DealerInquiryDetailView(APIView):
@@ -500,7 +489,7 @@ class DealerInquiryDetailView(APIView):
         
         try:
             inquiry = VehicleInquiry.objects.get(pk=pk, reel__dealer=request.user)
-            serializer = VehicleInquirySerializer(inquiry)
+            serializer = VehicleInquirySerializer(inquiry, context={'request': request})
             return Response(serializer.data)
         except VehicleInquiry.DoesNotExist:
             return Response({"error": "Inquiry not found."}, status=status.HTTP_404_NOT_FOUND)
