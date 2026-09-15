@@ -1,7 +1,7 @@
 from django.urls import path
 from .views import (
     ConversationListView, MessageHistoryView, StartChatView, 
-    GeneralStartChatView, SendMessageView, 
+    GeneralStartChatView, SendMessageView, MarkMessagesReadView,
     NotificationListView, NotificationDetailView
 )
 
@@ -11,6 +11,7 @@ urlpatterns = [
     path('conversations/', ConversationListView.as_view(), name='conversation-list'),
     path('conversations/<int:conversation_id>/messages/', MessageHistoryView.as_view(), name='message-history'),
     path('conversations/<int:conversation_id>/messages/send/', SendMessageView.as_view(), name='send-message'),
+    path('conversations/<int:conversation_id>/read/', MarkMessagesReadView.as_view(), name='mark-messages-read'),
     path('notifications/', NotificationListView.as_view(), name='notification-list'),
     path('notifications/<int:pk>/', NotificationDetailView.as_view(), name='notification-detail'),
 ]
