@@ -494,34 +494,61 @@
                   "key": "images",
                   "type": "file",
                   "src": "",
-                  "description": "Car photo 1 (front 3/4 angle)"
+                  "description": "Car photo 1 (front 3/4 angle - required start frame)"
                 },
                 {
                   "key": "images",
                   "type": "file",
                   "src": "",
-                  "description": "Car photo 2 (side profile)"
+                  "description": "Car photo 2 (side profile - reference element)"
                 },
                 {
                   "key": "images",
                   "type": "file",
                   "src": "",
-                  "description": "Car photo 3 (rear)"
+                  "description": "Car photo 3 (rear 3/4 angle - reference element)"
+                },
+                {
+                  "key": "images",
+                  "type": "file",
+                  "src": "",
+                  "description": "Car photo 4 (other side / front angle - reference element)"
+                },
+                {
+                  "key": "images",
+                  "type": "file",
+                  "src": "",
+                  "description": "Car photo 5 (optional extra detail angle)"
+                },
+                {
+                  "key": "images",
+                  "type": "file",
+                  "src": "",
+                  "description": "Car photo 6 (optional extra detail angle)"
+                },
+                {
+                  "key": "images",
+                  "type": "file",
+                  "src": "",
+                  "description": "Car photo 7 (optional extra detail angle)"
                 },
                 {
                   "key": "prompt",
                   "value": "driving smoothly along a coastal highway at sunset",
-                  "type": "text"
+                  "type": "text",
+                  "description": "Optional scene direction (e.g., coastal highway at sunset, mountain road)"
                 },
                 {
                   "key": "duration",
                   "value": "10",
-                  "type": "text"
+                  "type": "text",
+                  "description": "Duration in seconds (e.g. 5 or 10)"
                 },
                 {
                   "key": "resolution",
                   "value": "720p",
-                  "type": "text"
+                  "type": "text",
+                  "description": "Output resolution (720p or 1080p)"
                 }
               ]
             },
@@ -556,6 +583,42 @@
             ],
             "description": "Poll this endpoint until status becomes 'completed'. Once completed, use {{job_id}} to create the vehicle reel.",
             "url": "{{base_url}}/api/vehicles/ai-video/status/{{job_id}}/"
+          }
+        },
+        {
+          "name": "3. AI Video Webhook Callback (Simulate Completion)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"job_id\": \"{{job_id}}\",\n    \"status\": \"completed\",\n    \"video_url\": \"https://example.com/sample_video.mp4\"\n}"
+            },
+            "description": "Simulates the callback from the car-video-agent service to Django's webhook endpoint. Query parameter ?token={{ai_video_webhook_token}} must match your AI_VIDEO_WEBHOOK_TOKEN in .env.",
+            "url": {
+              "raw": "{{base_url}}/api/vehicles/ai-video/webhook/?token={{ai_video_webhook_token}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "vehicles",
+                "ai-video",
+                "webhook",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "token",
+                  "value": "{{ai_video_webhook_token}}"
+                }
+              ]
+            }
           }
         }
       ]
@@ -598,9 +661,9 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"name\": \"Porsche 911\",\n    \"model\": \"GT3 Touring\",\n    \"description\": \"Naturally aspirated 4.0L flat-six, 6-speed GT sport manual transmission.\",\n    \"year\": 2024,\n    \"variant\": \"Touring\",\n    \"body_type\": \"coupe\",\n    \"condition\": \"new\",\n    \"mileage_km\": 150,\n    \"color\": \"Chalk\",\n    \"fuel_type\": \"petrol\",\n    \"transmission\": \"manual\",\n    \"asking_price\": \"225000.00\",\n    \"negotiable\": false,\n    \"listing_duration\": 30,\n    \"location\": \"Miami, FL\",\n    \"engine_type\": \"Naturally Aspirated Flat-6\",\n    \"displacement\": \"4.0L\",\n    \"power\": \"502 hp\",\n    \"torque\": \"346 lb-ft\",\n    \"fuel_tank\": \"64L\",\n    \"doors\": 2,\n    \"seating\": 2,\n    \"weight\": \"3164 lbs\",\n    \"airbags\": true,\n    \"abs\": true,\n    \"stability_control\": true,\n    \"parking_sensors\": true,\n    \"camera\": true,\n    \"ac\": true,\n    \"infotainment\": true,\n    \"audio\": true,\n    \"upholstery\": \"Leather & Alcantara\",\n    \"windows\": \"Power\",\n    \"job_id\": \"{{job_id}}\",\n    \"background_music\": \"{{music_id}}\",\n    \"is_draft\": true\n}"
+              "raw": "{\n    \"name\": \"Porsche 911\",\n    \"model\": \"GT3 Touring\",\n    \"description\": \"Naturally aspirated 4.0L flat-six, 6-speed GT sport manual transmission.\",\n    \"year\": 2024,\n    \"variant\": \"Touring\",\n    \"body_type\": \"coupe\",\n    \"condition\": \"new\",\n    \"mileage_km\": 150,\n    \"color\": \"Chalk\",\n    \"fuel_type\": \"petrol\",\n    \"transmission\": \"manual\",\n    \"asking_price\": \"225000.00\",\n    \"negotiable\": false,\n    \"listing_duration\": 30,\n    \"location\": \"Miami, FL\",\n    \"latitude\": 25.761700,\n    \"longitude\": -80.191800,\n    \"engine_type\": \"Naturally Aspirated Flat-6\",\n    \"displacement\": \"4.0L\",\n    \"power\": \"502 hp\",\n    \"torque\": \"346 lb-ft\",\n    \"fuel_tank\": \"64L\",\n    \"doors\": 2,\n    \"seating\": 2,\n    \"weight\": \"3164 lbs\",\n    \"airbags\": true,\n    \"abs\": true,\n    \"stability_control\": true,\n    \"parking_sensors\": true,\n    \"camera\": true,\n    \"ac\": true,\n    \"infotainment\": true,\n    \"audio\": true,\n    \"upholstery\": \"Leather & Alcantara\",\n    \"windows\": \"Power\",\n    \"ai_video_generation\": \"{{job_id}}\",\n    \"job_id\": \"{{job_id}}\",\n    \"background_music\": \"{{music_id}}\",\n    \"is_draft\": false\n}"
             },
-            "description": "Creates a vehicle reel using an already generated AI video (via job_id). Supports background_music and is_draft (true for draft, false for live). Ultra-fast zero-copy server file linkage.",
+            "description": "Creates a vehicle reel using an already generated AI video (via job_id or ai_video_generation). Supports background_music and is_draft (false for live public feed, true for draft). Ultra-fast zero-copy server file linkage.",
             "url": "{{base_url}}/api/vehicles/create/"
           }
         },
@@ -774,6 +837,66 @@
                   "key": "windows",
                   "value": "Power",
                   "type": "text"
+                },
+                {
+                  "key": "airbags",
+                  "value": "true",
+                  "type": "text",
+                  "description": "Safety feature: Airbags"
+                },
+                {
+                  "key": "abs",
+                  "value": "true",
+                  "type": "text",
+                  "description": "Safety feature: Anti-lock Braking System"
+                },
+                {
+                  "key": "stability_control",
+                  "value": "true",
+                  "type": "text",
+                  "description": "Safety feature: Electronic Stability Control"
+                },
+                {
+                  "key": "parking_sensors",
+                  "value": "true",
+                  "type": "text",
+                  "description": "Safety feature: Parking Sensors"
+                },
+                {
+                  "key": "camera",
+                  "value": "true",
+                  "type": "text",
+                  "description": "Safety feature: Backup / 360 Camera"
+                },
+                {
+                  "key": "ac",
+                  "value": "true",
+                  "type": "text",
+                  "description": "Comfort feature: Air Conditioning"
+                },
+                {
+                  "key": "infotainment",
+                  "value": "true",
+                  "type": "text",
+                  "description": "Comfort feature: Touchscreen Infotainment"
+                },
+                {
+                  "key": "audio",
+                  "value": "true",
+                  "type": "text",
+                  "description": "Comfort feature: Premium Sound System"
+                },
+                {
+                  "key": "latitude",
+                  "value": "25.761700",
+                  "type": "text",
+                  "description": "Map latitude coordinate"
+                },
+                {
+                  "key": "longitude",
+                  "value": "-80.191800",
+                  "type": "text",
+                  "description": "Map longitude coordinate"
                 }
               ]
             },
@@ -845,8 +968,9 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"asking_price\": \"219000.00\",\n    \"negotiable\": true\n}"
+              "raw": "{\n    \"name\": \"BMW M3\",\n    \"model\": \"Competition\",\n    \"description\": \"Updated description with full packages and ceramic brakes.\",\n    \"year\": 2023,\n    \"variant\": \"M xDrive\",\n    \"body_type\": \"sedan\",\n    \"condition\": \"used\",\n    \"mileage_km\": 13500,\n    \"color\": \"Isle of Man Green\",\n    \"fuel_type\": \"petrol\",\n    \"transmission\": \"automatic\",\n    \"asking_price\": \"79500.00\",\n    \"negotiable\": true,\n    \"listing_duration\": 30,\n    \"location\": \"Miami, FL\",\n    \"latitude\": 25.761700,\n    \"longitude\": -80.191800,\n    \"engine_type\": \"Twin-Turbo I6\",\n    \"displacement\": \"3.0L\",\n    \"power\": \"503 hp\",\n    \"torque\": \"479 lb-ft\",\n    \"fuel_tank\": \"59L\",\n    \"doors\": 4,\n    \"seating\": 5,\n    \"weight\": \"3890 lbs\",\n    \"upholstery\": \"Merino Leather\",\n    \"windows\": \"Power\",\n    \"airbags\": true,\n    \"abs\": true,\n    \"stability_control\": true,\n    \"parking_sensors\": true,\n    \"camera\": true,\n    \"ac\": true,\n    \"infotainment\": true,\n    \"audio\": true\n}"
             },
+            "description": "Partial or full update of vehicle specifications, features, and pricing. Send any subset of fields. You can also switch to formdata mode to replace video_file.",
             "url": "{{base_url}}/api/vehicles/{{vehicle_id}}/"
           }
         },
@@ -860,6 +984,7 @@
                 "value": "Bearer {{access_token}}"
               }
             ],
+            "description": "Permanently deletes a vehicle and cascades to all its reels, likes, saves, and comments.",
             "url": "{{base_url}}/api/vehicles/{{vehicle_id}}/"
           }
         }
@@ -1447,6 +1572,11 @@
     {
       "key": "job_id",
       "value": "3a3b55ca-0390-40ca-92ef-bfa0d7a862af",
+      "type": "string"
+    },
+    {
+      "key": "ai_video_webhook_token",
+      "value": "",
       "type": "string"
     },
     {

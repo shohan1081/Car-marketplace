@@ -31,9 +31,29 @@ def _copy_ai_generated_video_to_reel(reel, generation):
         reel.video_file.save(dest_filename, src_file, save=False)
 
 class MusicSerializer(serializers.ModelSerializer):
+    file = serializers.SerializerMethodField()
+
     class Meta:
         model = Music
         fields = ['id', 'title', 'file']
+
+    def get_file(self, obj):
+        if not obj.file:
+            return None
+        request = self.context.get('request')
+        if request:
+            try:
+                return request.build_absolute_uri(obj.file.url)
+            except Exception:
+                return obj.file.url
+        return obj.file.url
+
+class FlexibleMusicRelatedField(serializers.PrimaryKeyRelatedField):
+    """Accepts Music ID (int/str), None, null, or empty string from multipart forms."""
+    def to_internal_value(self, data):
+        if data in ('', 'null', 'None', 0, '0', None):
+            return None
+        return super().to_internal_value(data)
 
 class DealerVehicleReelSerializer(serializers.ModelSerializer):
     background_music = MusicSerializer(read_only=True)
@@ -44,9 +64,10 @@ class DealerVehicleReelSerializer(serializers.ModelSerializer):
 
 class VehicleSerializer(serializers.ModelSerializer):
     video_file = serializers.FileField(write_only=True, required=False)
-    background_music = serializers.PrimaryKeyRelatedField(
+    background_music = FlexibleMusicRelatedField(
         queryset=Music.objects.all(),
         required=False,
+        allow_null=True,
         write_only=True
     )
     # Alternative to uploading video_file: the job_id of a dealer's own
