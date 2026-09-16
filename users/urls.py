@@ -1,7 +1,7 @@
 from django.urls import path
 from rest_framework_simplejwt.views import TokenRefreshView
 from .views import (
-    BuyerSignupView, DealerSignupView, LoginView, OTPVerifyView, 
+    BuyerSignupView, DealerSignupView, LoginView, LogoutView, OTPVerifyView, 
     UserPreferenceView, BusinessInformationView, FirebaseAuthView,
     ForgetPasswordView, ResetPasswordView, DealerProfileView, DealerReviewView,
     UserProfileView, UserSearchView, FollowDealerView, DealerFollowersListView,
@@ -12,15 +12,18 @@ urlpatterns = [
     # Buyer URLs
     path('buyer/signup/', BuyerSignupView.as_view(), name='buyer-signup'),
     path('buyer/login/', LoginView.as_view(), name='buyer-login'),
+    path('buyer/logout/', LogoutView.as_view(), name='buyer-logout'),
     path('buyer/delete-account/', DeleteAccountView.as_view(), name='buyer-delete-account'),
     
     # Dealer URLs
     path('dealer/signup/', DealerSignupView.as_view(), name='dealer-signup'),
     path('dealer/login/', LoginView.as_view(), name='dealer-login'),
+    path('dealer/logout/', LogoutView.as_view(), name='dealer-logout'),
     path('dealer/business-info/', BusinessInformationView.as_view(), name='business-info'),
     path('dealer/profile/edit/', DealerProfileUpdateView.as_view(), name='dealer-profile-edit'),
 
     # Shared URLs
+    path('logout/', LogoutView.as_view(), name='logout'),
     path('otp-verify/', OTPVerifyView.as_view(), name='otp-verify'),
     path('forget-password/', ForgetPasswordView.as_view(), name='forget-password'),
     path('reset-password/', ResetPasswordView.as_view(), name='reset-password'),

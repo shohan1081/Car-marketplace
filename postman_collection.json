@@ -183,6 +183,42 @@
           }
         },
         {
+          "name": "Logout (Dealer or Buyer)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "console.log('Logged out successfully. Tokens invalidated.');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"refresh\": \"{{refresh_token}}\"\n}"
+            },
+            "description": "Logs out the authenticated user (dealer or buyer) by blacklisting their refresh token server-side, preventing future token refreshes.",
+            "url": "{{base_url}}/api/users/logout/"
+          }
+        },
+        {
           "name": "Get User Profile",
           "request": {
             "method": "GET",

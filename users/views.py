@@ -14,7 +14,7 @@ from .serializers import (
 )
 from .models import OTP, UserPreference, BusinessInformation, DealerReview, Follow
 from .utils import send_account_deletion_email
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from django.db.models import Avg, Q, Count
 
 User = get_user_model()
@@ -122,6 +122,26 @@ class LoginView(APIView):
                 }, status=status.HTTP_200_OK)
             return Response({"error": "Invalid credentials."}, status=status.HTTP_401_UNAUTHORIZED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class LogoutView(APIView):
+    """
+    Logs out the authenticated user (dealer or buyer) by blacklisting their refresh token.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        refresh_token = request.data.get('refresh')
+        if not refresh_token:
+            return Response({"error": "Refresh token is required."}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+        except TokenError:
+            # Token might already be expired or blacklisted; consider logout successful
+            pass
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"message": "Successfully logged out."}, status=status.HTTP_200_OK)
 
 class DealerSignupView(APIView):
     permission_classes = [permissions.AllowAny]
