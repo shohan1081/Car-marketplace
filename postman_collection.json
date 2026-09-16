@@ -620,6 +620,53 @@
               ]
             }
           }
+        },
+        {
+          "name": "4. List Dealer AI Videos (All or Unused)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (Array.isArray(jsonData) && jsonData.length > 0) {",
+                  "    pm.collectionVariables.set('job_id', jsonData[0].job_id);",
+                  "    console.log('Saved latest job_id: ' + jsonData[0].job_id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "description": "Lists all AI generated videos for the dealer. Filter options:\n- ?unused=true (only completed videos not yet converted into reels - ideal for picking an AI video to publish)\n- ?status=completed|pending|failed\n\nAuto-saves the first result's job_id into {{job_id}}.",
+            "url": {
+              "raw": "{{base_url}}/api/vehicles/ai-video/?unused=true",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "vehicles",
+                "ai-video",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "unused",
+                  "value": "true",
+                  "description": "Filter: true for videos not yet used in a reel"
+                }
+              ]
+            }
+          }
         }
       ]
     },
@@ -1019,6 +1066,68 @@
             ],
             "description": "Returns all reels belonging to the dealer, with is_draft flag indicating whether they are published or draft.",
             "url": "{{base_url}}/api/vehicles/inventory/"
+          }
+        },
+        {
+          "name": "Dealer Inventory (Filter: AI Generated Only)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "description": "Returns only AI-generated reels belonging to the dealer (both published and drafts).",
+            "url": {
+              "raw": "{{base_url}}/api/vehicles/inventory/?is_ai_generated=true",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "vehicles",
+                "inventory",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "is_ai_generated",
+                  "value": "true"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Dealer Inventory (Filter: Manual Video Only)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "description": "Returns only manually uploaded video reels belonging to the dealer (both published and drafts).",
+            "url": {
+              "raw": "{{base_url}}/api/vehicles/inventory/?is_ai_generated=false",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "vehicles",
+                "inventory",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "is_ai_generated",
+                  "value": "false"
+                }
+              ]
+            }
           }
         },
         {

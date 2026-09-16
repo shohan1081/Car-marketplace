@@ -129,8 +129,11 @@ class VehicleSerializer(serializers.ModelSerializer):
         reel = DealerVehicleReel(vehicle=vehicle, dealer=vehicle.dealer, background_music=background_music)
         if video_file:
             reel.video_file = video_file
+            reel.is_ai_generated = False
         else:
             _copy_ai_generated_video_to_reel(reel, ai_generation)
+            reel.is_ai_generated = True
+            reel.ai_generation = ai_generation
         reel.save()
         return vehicle
 
@@ -151,8 +154,12 @@ class VehicleSerializer(serializers.ModelSerializer):
             if reel:
                 if video_file:
                     reel.video_file = video_file
+                    reel.is_ai_generated = False
+                    reel.ai_generation = None
                 elif ai_generation:
                     _copy_ai_generated_video_to_reel(reel, ai_generation)
+                    reel.is_ai_generated = True
+                    reel.ai_generation = ai_generation
                 if background_music:
                     reel.background_music = background_music
                 reel.save()
@@ -202,7 +209,7 @@ class ReelNewsfeedSerializer(serializers.ModelSerializer):
     class Meta:
         model = DealerVehicleReel
         fields = [
-            'id', 'video_file', 'background_music', 'dealer_id', 'dealer_name',
+            'id', 'video_file', 'background_music', 'is_ai_generated', 'dealer_id', 'dealer_name',
             'dealer_profile_photo', 'dealer_rating', 'dealer_reviews',
             'dealer_is_followed', 'vehicle_details', 'likes_count', 'share_count',
             'view_count', 'comments_count', 'is_liked', 'is_saved', 'created_at'
@@ -374,12 +381,38 @@ class VehicleInquirySerializer(serializers.ModelSerializer):
 
 class AIVideoGenerationSerializer(serializers.ModelSerializer):
     job_id = serializers.UUIDField(read_only=True)
+    is_used = serializers.SerializerMethodField()
+    vehicle_id = serializers.SerializerMethodField()
+    vehicle_name = serializers.SerializerMethodField()
+    generated_video = serializers.SerializerMethodField()
 
     class Meta:
         model = AIVideoGeneration
         fields = [
             'job_id', 'prompt', 'duration', 'resolution',
-            'status', 'generated_video', 'error_message',
-            'created_at', 'updated_at'
+            'status', 'generated_video', 'is_used', 'vehicle_id', 'vehicle_name',
+            'error_message', 'created_at', 'updated_at'
         ]
         read_only_fields = ['status', 'generated_video', 'error_message', 'created_at', 'updated_at']
+
+    def get_is_used(self, obj):
+        return obj.reels.exists()
+
+    def get_vehicle_id(self, obj):
+        first_reel = obj.reels.first()
+        return first_reel.vehicle_id if first_reel else None
+
+    def get_vehicle_name(self, obj):
+        first_reel = obj.reels.first()
+        return first_reel.vehicle.name if first_reel else None
+
+    def get_generated_video(self, obj):
+        if not obj.generated_video:
+            return None
+        request = self.context.get('request')
+        if request:
+            try:
+                return request.build_absolute_uri(obj.generated_video.url)
+            except Exception:
+                return obj.generated_video.url
+        return obj.generated_video.url

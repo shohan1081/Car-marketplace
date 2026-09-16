@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from rest_framework.test import APIClient
 from rest_framework import status
 from users.models import BusinessInformation
-from .models import Music
+from .models import Music, Vehicle, DealerVehicleReel, AIVideoGeneration
 
 User = get_user_model()
 
@@ -86,3 +86,123 @@ class VehicleRestrictionTests(TestCase):
         # Should be 400 Bad Request (validation)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertNotIn("Your account is not verified", str(response.data))
+
+
+class AIVideoAndInventoryTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.dealer = User.objects.create_user(
+            email='dealer_ai@test.com',
+            password='password123',
+            is_dealer=True,
+            is_verified=True
+        )
+        self.other_dealer = User.objects.create_user(
+            email='dealer_other@test.com',
+            password='password123',
+            is_dealer=True,
+            is_verified=True
+        )
+        self.buyer = User.objects.create_user(
+            email='buyer_ai@test.com',
+            password='password123',
+            is_dealer=False,
+            is_verified=True
+        )
+        # Completed unused AI video
+        self.unused_gen = AIVideoGeneration.objects.create(
+            dealer=self.dealer,
+            prompt='Test unused',
+            status='completed'
+        )
+        # Completed used AI video
+        self.used_gen = AIVideoGeneration.objects.create(
+            dealer=self.dealer,
+            prompt='Test used',
+            status='completed'
+        )
+        # Pending AI video
+        self.pending_gen = AIVideoGeneration.objects.create(
+            dealer=self.dealer,
+            prompt='Test pending',
+            status='pending'
+        )
+        def create_vehicle(name):
+            return Vehicle.objects.create(
+                dealer=self.dealer,
+                name=name,
+                model='Model X',
+                description='Test description',
+                year=2024,
+                variant='Standard',
+                body_type='sedan',
+                condition='used',
+                mileage_km=10000,
+                color='White',
+                fuel_type='petrol',
+                transmission='automatic',
+                asking_price=50000,
+                listing_duration=30,
+                location='Miami, FL',
+                engine_type='V6',
+                displacement='3.0L',
+                power='300hp',
+                torque='300Nm',
+                fuel_tank='60L',
+                doors=4,
+                seating=5,
+                weight='1500kg'
+            )
+
+        # Vehicle & Reel for used_gen
+        self.vehicle_ai = create_vehicle('AI Car')
+        self.reel_ai = DealerVehicleReel.objects.create(
+            dealer=self.dealer,
+            vehicle=self.vehicle_ai,
+            video_file='test_ai.mp4',
+            is_ai_generated=True,
+            ai_generation=self.used_gen
+        )
+        # Manual Vehicle & Reel
+        self.vehicle_manual = create_vehicle('Manual Car')
+        self.reel_manual = DealerVehicleReel.objects.create(
+            dealer=self.dealer,
+            vehicle=self.vehicle_manual,
+            video_file='test_manual.mp4',
+            is_ai_generated=False
+        )
+
+    def test_buyer_forbidden_from_ai_video_list(self):
+        self.client.force_authenticate(user=self.buyer)
+        response = self.client.get('/api/vehicles/ai-video/')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_dealer_list_all_ai_videos(self):
+        self.client.force_authenticate(user=self.dealer)
+        response = self.client.get('/api/vehicles/ai-video/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 3)
+
+    def test_dealer_filter_unused_ai_videos(self):
+        self.client.force_authenticate(user=self.dealer)
+        response = self.client.get('/api/vehicles/ai-video/?unused=true')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['job_id'], str(self.unused_gen.job_id))
+        self.assertFalse(response.data[0]['is_used'])
+
+    def test_dealer_inventory_filter_ai_generated(self):
+        self.client.force_authenticate(user=self.dealer)
+        response = self.client.get('/api/vehicles/inventory/?is_ai_generated=true')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['id'], self.reel_ai.id)
+        self.assertTrue(response.data[0]['is_ai_generated'])
+
+    def test_dealer_inventory_filter_manual(self):
+        self.client.force_authenticate(user=self.dealer)
+        response = self.client.get('/api/vehicles/inventory/?is_ai_generated=false')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['id'], self.reel_manual.id)
+        self.assertFalse(response.data[0]['is_ai_generated'])

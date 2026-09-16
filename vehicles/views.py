@@ -127,11 +127,24 @@ class DealerInventoryView(APIView):
             return Response({"error": "Only dealers can access their inventory."}, status=status.HTTP_403_FORBIDDEN)
         
         # Get all reels belonging to this dealer
-        # Including those where vehicle is draft or published
         reels = DealerVehicleReel.objects.filter(dealer=request.user).order_by('-created_at')
+
+        # Filter by AI vs Manual
+        is_ai = request.query_params.get('is_ai_generated')
+        if is_ai is not None:
+            if is_ai.lower() in ('true', '1', 'yes'):
+                reels = reels.filter(is_ai_generated=True)
+            elif is_ai.lower() in ('false', '0', 'no'):
+                reels = reels.filter(is_ai_generated=False)
+
+        type_param = request.query_params.get('type')
+        if type_param:
+            if type_param.lower() == 'ai':
+                reels = reels.filter(is_ai_generated=True)
+            elif type_param.lower() == 'manual':
+                reels = reels.filter(is_ai_generated=False)
         
-        # We can return them as a single list, or grouped. 
-        # A single list with 'is_draft' property is usually most flexible for Flutter.
+        # A single list with 'is_draft' and 'is_ai_generated' property is most flexible for Flutter.
         serializer = ReelNewsfeedSerializer(reels, many=True, context={'request': request})
         
         # Add is_draft status to the response for each reel
@@ -599,6 +612,37 @@ class AIVideoStatusView(APIView):
         except (AIVideoGeneration.DoesNotExist, DjangoValidationError, ValueError):
             return Response({"error": "AI generation request not found."}, status=status.HTTP_404_NOT_FOUND)
         return Response(AIVideoGenerationSerializer(generation, context={'request': request}).data)
+
+class AIVideoListView(APIView):
+    """
+    List all AI video generations for the authenticated dealer.
+    Supports filtering:
+      - ?unused=true (only returns completed videos that haven't been turned into a vehicle reel yet)
+      - ?unused=false (only returns videos that have already been converted to a reel)
+      - ?status=completed|pending|failed
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        if not request.user.is_dealer:
+            return Response({"error": "Only dealers can access AI video generations."}, status=status.HTTP_403_FORBIDDEN)
+
+        queryset = AIVideoGeneration.objects.filter(dealer=request.user)
+
+        status_param = request.query_params.get('status')
+        if status_param:
+            queryset = queryset.filter(status=status_param.lower())
+
+        unused_param = request.query_params.get('unused')
+        if unused_param is not None:
+            if unused_param.lower() in ('true', '1', 'yes'):
+                queryset = queryset.filter(status='completed', reels__isnull=True)
+            elif unused_param.lower() in ('false', '0', 'no'):
+                queryset = queryset.filter(reels__isnull=False)
+
+        queryset = queryset.prefetch_related('reels', 'reels__vehicle').order_by('-created_at')
+        serializer = AIVideoGenerationSerializer(queryset, many=True, context={'request': request})
+        return Response(serializer.data)
 
 class AIVideoWebhookView(APIView):
     """

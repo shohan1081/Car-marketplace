@@ -99,6 +99,8 @@ class DealerVehicleReel(models.Model):
     vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE, related_name='reels')
     video_file = models.FileField(upload_to='reels/', validators=[validate_video_duration])
     background_music = models.ForeignKey(Music, on_delete=models.SET_NULL, null=True, blank=True)
+    ai_generation = models.ForeignKey('AIVideoGeneration', on_delete=models.SET_NULL, null=True, blank=True, related_name='reels')
+    is_ai_generated = models.BooleanField(default=False)
     share_count = models.PositiveIntegerField(default=0)
     view_count = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)

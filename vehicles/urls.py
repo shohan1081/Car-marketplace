@@ -5,7 +5,7 @@ from .views import (
     NewsfeedView, ReelDetailView, LikeReelView, SaveReelView, ShareReelView,
     SavedReelsListView, VehicleInquiryCreateView, ReelViewCountView,
     DealerInquiryListView, DealerInquiryDetailView, DealerInquiryActionView,
-    AIVideoGenerationView, AIVideoStatusView, AIVideoWebhookView,
+    AIVideoGenerationView, AIVideoStatusView, AIVideoListView, AIVideoWebhookView,
     VehicleSearchView, BuyerInquiryListView, ReelCommentListView, ReelCommentDetailView
 )
 
@@ -40,6 +40,7 @@ urlpatterns = [
     path('comments/<int:comment_id>/', ReelCommentDetailView.as_view(), name='comment-detail'),
 
     # AI Video Generation (proxies to the external car-video-agent service)
+    path('ai-video/', AIVideoListView.as_view(), name='ai-video-list'),
     path('ai-video/generate/', AIVideoGenerationView.as_view(), name='ai-video-generate'),
     path('ai-video/status/<uuid:job_id>/', AIVideoStatusView.as_view(), name='ai-video-status'),
     path('ai-video/webhook/', AIVideoWebhookView.as_view(), name='ai-video-webhook'),
