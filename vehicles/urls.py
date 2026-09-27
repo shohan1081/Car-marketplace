@@ -2,7 +2,7 @@ from django.urls import path
 from .views import (
     MusicListView, VehicleCreateView, VehicleDetailView, DealerDashboardView,
     DealerInventoryView, VehiclePreviewView, VehicleDraftPublishView,
-    NewsfeedView, ReelDetailView, LikeReelView, SaveReelView, ShareReelView,
+    NewsfeedView, LatestReelsView, ReelDetailView, LikeReelView, SaveReelView, ShareReelView,
     SavedReelsListView, VehicleInquiryCreateView, ReelViewCountView,
     DealerInquiryListView, DealerInquiryDetailView, DealerInquiryActionView,
     AIVideoGenerationView, AIVideoStatusView, AIVideoListView, AIVideoWebhookView,
@@ -28,6 +28,9 @@ urlpatterns = [
     
     # Newsfeed & Interactions
     path('newsfeed/', NewsfeedView.as_view(), name='newsfeed'),
+    path('newsfeed/latest/', LatestReelsView.as_view(), name='newsfeed-latest'),
+    path('reels/latest/', LatestReelsView.as_view(), name='reels-latest'),
+    path('new-reels/', LatestReelsView.as_view(), name='new-reels'),
     path('search/', VehicleSearchView.as_view(), name='vehicle-search'),
     path('reels/<int:pk>/', ReelDetailView.as_view(), name='reel-detail'),
     path('reels/<int:pk>/like/', LikeReelView.as_view(), name='reel-like'),
