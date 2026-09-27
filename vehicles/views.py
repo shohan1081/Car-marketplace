@@ -119,6 +119,30 @@ class DealerDashboardView(APIView):
 
         return Response(dashboard_data)
 
+def _filter_reels_by_ai_param(queryset, request):
+    """Filters a DealerVehicleReel queryset by ?is_ai_generated=true|false or ?type=ai|manual."""
+    ai_q = (
+        Q(is_ai_generated=True)
+        | Q(ai_generation__isnull=False)
+        | Q(video_file__icontains='ai_gen_')
+        | Q(video_file__iregex=r'(^|/)vehicle_reel(_[a-zA-Z0-9]+)?\.mp4$')
+    )
+    is_ai = request.query_params.get('is_ai_generated')
+    if is_ai is not None:
+        if is_ai.lower() in ('true', '1', 'yes'):
+            queryset = queryset.filter(ai_q)
+        elif is_ai.lower() in ('false', '0', 'no'):
+            queryset = queryset.exclude(ai_q)
+
+    type_param = request.query_params.get('type')
+    if type_param:
+        if type_param.lower() == 'ai':
+            queryset = queryset.filter(ai_q)
+        elif type_param.lower() == 'manual':
+            queryset = queryset.exclude(ai_q)
+    return queryset
+
+
 class DealerInventoryView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -128,21 +152,7 @@ class DealerInventoryView(APIView):
         
         # Get all reels belonging to this dealer
         reels = DealerVehicleReel.objects.filter(dealer=request.user).order_by('-created_at')
-
-        # Filter by AI vs Manual
-        is_ai = request.query_params.get('is_ai_generated')
-        if is_ai is not None:
-            if is_ai.lower() in ('true', '1', 'yes'):
-                reels = reels.filter(is_ai_generated=True)
-            elif is_ai.lower() in ('false', '0', 'no'):
-                reels = reels.filter(is_ai_generated=False)
-
-        type_param = request.query_params.get('type')
-        if type_param:
-            if type_param.lower() == 'ai':
-                reels = reels.filter(is_ai_generated=True)
-            elif type_param.lower() == 'manual':
-                reels = reels.filter(is_ai_generated=False)
+        reels = _filter_reels_by_ai_param(reels, request)
         
         # A single list with 'is_draft' and 'is_ai_generated' property is most flexible for Flutter.
         serializer = ReelNewsfeedSerializer(reels, many=True, context={'request': request})
@@ -165,7 +175,8 @@ class NewsfeedView(APIView):
         queryset = DealerVehicleReel.objects.filter(
             vehicle__is_draft=False,
             dealer__business_info__verification_status='verified'
-        ).distinct()
+        )
+        queryset = _filter_reels_by_ai_param(queryset, request).distinct()
 
         if user.is_authenticated:
             try:
@@ -208,6 +219,7 @@ class VehicleSearchView(APIView):
             vehicle__is_draft=False,
             dealer__business_info__verification_status='verified'
         )
+        queryset = _filter_reels_by_ai_param(queryset, request)
 
         if query:
             # Search by vehicle name, dealer name, or location
