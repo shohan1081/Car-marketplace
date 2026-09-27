@@ -206,3 +206,90 @@ class AIVideoAndInventoryTests(TestCase):
         self.assertEqual(len(response.data), 1)
         self.assertEqual(response.data[0]['id'], self.reel_manual.id)
         self.assertFalse(response.data[0]['is_ai_generated'])
+
+    def test_legacy_ai_gen_and_vehicle_reel_filenames_report_is_ai_generated_true(self):
+        BusinessInformation.objects.create(
+            user=self.dealer,
+            verification_status='verified',
+            dealership_name='AI Motors',
+            display_name='AI Motors',
+            street_address='789 St',
+            state='NY',
+            division='NY',
+            trade_license_number='TL789',
+            dealership_license_number='DL789',
+            expiry_date='2030-01-01',
+            dealership_description='Desc'
+        )
+        self.vehicle_ai.is_draft = False
+        self.vehicle_ai.save()
+        self.vehicle_manual.is_draft = False
+        self.vehicle_manual.save()
+
+        # Simulate legacy DB rows where is_ai_generated was False in DB
+        DealerVehicleReel.objects.filter(pk=self.reel_ai.pk).update(
+            is_ai_generated=False,
+            ai_generation=None,
+            video_file='reels/vehicle_reel.mp4'
+        )
+        response = self.client.get('/api/vehicles/newsfeed/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        by_id = {item['id']: item for item in response.data}
+        self.assertTrue(by_id[self.reel_ai.id]['is_ai_generated'])
+        self.assertFalse(by_id[self.reel_manual.id]['is_ai_generated'])
+
+    def test_uploaded_ai_video_detected_by_content_hash_or_temp_filename(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        BusinessInformation.objects.create(
+            user=self.dealer,
+            verification_status='verified',
+            dealership_name='AI Motors 2',
+            display_name='AI Motors 2',
+            street_address='789 St',
+            state='NY',
+            division='NY',
+            trade_license_number='TL7892',
+            dealership_license_number='DL7892',
+            expiry_date='2030-01-01',
+            dealership_description='Desc'
+        )
+        ai_bytes = b'fake-ai-mp4-video-bytes-1234567890'
+        self.unused_gen.generated_video.save('ai_gen_test.mp4', SimpleUploadedFile('ai_gen_test.mp4', ai_bytes, content_type='video/mp4'), save=True)
+
+        self.client.force_authenticate(user=self.dealer)
+        uploaded = SimpleUploadedFile('vehicle_reel.mp4', ai_bytes, content_type='video/mp4')
+        payload = {
+            'name': 'Porsche 911',
+            'model': 'Carrera',
+            'description': 'AI video listing',
+            'year': 2024,
+            'variant': 'GT3',
+            'body_type': 'coupe',
+            'condition': 'new',
+            'mileage_km': 50,
+            'color': 'Red',
+            'fuel_type': 'petrol',
+            'transmission': 'automatic',
+            'asking_price': '180000.00',
+            'negotiable': True,
+            'listing_duration': 30,
+            'location': 'Miami, FL',
+            'engine_type': 'Flat-6',
+            'displacement': '4.0L',
+            'power': '502hp',
+            'torque': '470Nm',
+            'fuel_tank': '64L',
+            'doors': 2,
+            'seating': 2,
+            'weight': '1435kg',
+            'upholstery': 'Leather',
+            'windows': 'Power',
+            'is_draft': 'false',
+            'video_file': uploaded,
+        }
+        response = self.client.post('/api/vehicles/create/', payload, format='multipart')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertTrue(response.data['is_ai_generated'])
+        self.assertTrue(response.data['reels'][0]['is_ai_generated'])
+        self.assertEqual(response.data['reels'][0]['ai_generation'], self.unused_gen.id)
+
