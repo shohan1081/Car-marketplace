@@ -125,7 +125,7 @@ def _filter_reels_by_ai_param(queryset, request):
         Q(is_ai_generated=True)
         | Q(ai_generation__isnull=False)
         | Q(video_file__icontains='ai_gen_')
-        | Q(video_file__iregex=r'(^|/)vehicle_reel(_[a-zA-Z0-9]+)?\.mp4$')
+        | Q(video_file__iregex=r'(^|/)vehicle_reel(_[a-zA-Z0-9]+)*\.mp4$')
     )
     is_ai = request.query_params.get('is_ai_generated')
     if is_ai is not None:
