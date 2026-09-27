@@ -73,9 +73,10 @@ INSTALLED_APPS = [
 
 AUTH_USER_MODEL = 'users.User'
 
-# Media files
+# Media files & optional Cloudflare CDN base URL (e.g. https://cdn.buysoloio.com)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_CDN_URL = env('MEDIA_CDN_URL', default='').rstrip('/')
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -196,7 +197,7 @@ STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STORAGES = {
     'default': {
-        'BACKEND': 'django.core.files.storage.FileSystemStorage',
+        'BACKEND': 'vehicles.storage.CDNFileSystemStorage',
     },
     'staticfiles': {
         'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
@@ -317,14 +318,23 @@ FIREBASE_CREDENTIALS_PATH = env('FIREBASE_CREDENTIALS_PATH', default='')
 
 
 # ---------------------------------------------------------------------------
-# Upload limits
+# Upload limits & Background Video Optimization
 # ---------------------------------------------------------------------------
-# Reels are videos, so anything over this threshold is streamed to a temp file
-# on disk instead of being buffered in RAM. nginx enforces the hard ceiling
-# (client_max_body_size); this only controls where Django buffers the bytes.
-FILE_UPLOAD_MAX_MEMORY_SIZE = env.int('DJANGO_FILE_UPLOAD_MAX_MEMORY_SIZE', default=5 * 1024 * 1024)
-DATA_UPLOAD_MAX_MEMORY_SIZE = env.int('DJANGO_DATA_UPLOAD_MAX_MEMORY_SIZE', default=5 * 1024 * 1024)
+# Reels are videos, so anything over this threshold (2.5 MB default) is streamed
+# directly to a temp file on disk instead of being buffered in RAM.
+MAX_VIDEO_UPLOAD_SIZE_MB = env.int('MAX_VIDEO_UPLOAD_SIZE_MB', default=500)
+FILE_UPLOAD_MAX_MEMORY_SIZE = env.int('DJANGO_FILE_UPLOAD_MAX_MEMORY_SIZE', default=2621440)  # 2.5 MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = env.int('DJANGO_DATA_UPLOAD_MAX_MEMORY_SIZE', default=524288000)  # 500 MB
 DATA_UPLOAD_MAX_NUMBER_FILES = env.int('DJANGO_DATA_UPLOAD_MAX_NUMBER_FILES', default=100)
+
+# Re-encode uploaded videos in the background (ffmpeg) to 720p H.264 + faststart for smooth mobile playback.
+VIDEO_AUTO_OPTIMIZE = env.bool('VIDEO_AUTO_OPTIMIZE', default=True)
+VIDEO_OPTIMIZE_MAX_SHORT_SIDE = env.int('VIDEO_OPTIMIZE_MAX_SHORT_SIDE', default=720)
+VIDEO_OPTIMIZE_MAX_KBPS = env.int('VIDEO_OPTIMIZE_MAX_KBPS', default=2500)
+VIDEO_OPTIMIZE_CRF = env.int('VIDEO_OPTIMIZE_CRF', default=23)
+VIDEO_OPTIMIZE_PRESET = env('VIDEO_OPTIMIZE_PRESET', default='veryfast')
+VIDEO_OPTIMIZE_THREADS = env.int('VIDEO_OPTIMIZE_THREADS', default=2)
+VIDEO_OPTIMIZE_TIMEOUT = env.int('VIDEO_OPTIMIZE_TIMEOUT', default=3600)
 
 
 # ---------------------------------------------------------------------------
@@ -342,6 +352,15 @@ if not DEBUG:
     # Turn these on only AFTER the TLS certificate is installed, otherwise the
     # site becomes unreachable over plain HTTP during first setup.
     SECURE_SSL_REDIRECT = env.bool('DJANGO_SECURE_SSL_REDIRECT', default=False)
+    # Internal plain-HTTP callers that must never be redirected: the container
+    # healthchecks, and the car-video-agent posting results to
+    # http://web:8000/... (httpx does not follow redirects, so a 301 here would
+    # leave every AI video stuck at "processing"). nginx already redirects all
+    # PUBLIC http traffic to https, so this exemption exposes nothing.
+    SECURE_REDIRECT_EXEMPT = [
+        r'^healthz/$',
+        r'^api/vehicles/ai-video/webhook/$',
+    ]
     SESSION_COOKIE_SECURE = env.bool('DJANGO_SECURE_COOKIES', default=False)
     CSRF_COOKIE_SECURE = env.bool('DJANGO_SECURE_COOKIES', default=False)
 
