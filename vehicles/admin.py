@@ -15,7 +15,8 @@ class VehicleAdmin(ModelAdmin):
 
 @admin.register(DealerVehicleReel)
 class DealerVehicleReelAdmin(ModelAdmin):
-    list_display = ['vehicle', 'dealer', 'created_at']
+    list_display = ['vehicle', 'dealer', 'is_ai_generated', 'ai_generation', 'created_at']
+    list_filter = ['is_ai_generated']
 
 @admin.register(AIVideoGeneration)
 class AIVideoGenerationAdmin(ModelAdmin):
