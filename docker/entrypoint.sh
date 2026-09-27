@@ -50,6 +50,9 @@ if [ "${RUN_MIGRATIONS:-false}" = "true" ]; then
     # Copies admin + django-unfold CSS/JS into /app/staticfiles, which is a
     # shared volume that nginx serves directly.
     python manage.py collectstatic --noinput --clear
+
+    echo "[entrypoint] scheduling background video optimization for existing reels..."
+    (python manage.py optimize_videos || true) &
 fi
 
 echo "[entrypoint] starting: $*"
