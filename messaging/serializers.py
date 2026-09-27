@@ -38,6 +38,7 @@ class ConversationSerializer(serializers.ModelSerializer):
 
     def get_reel_details(self, obj):
         if obj.reel and obj.reel.vehicle:
+            from vehicles.serializers import is_reel_ai_generated
             request = self.context.get('request')
             video_url = None
             if obj.reel.video_file:
@@ -49,7 +50,8 @@ class ConversationSerializer(serializers.ModelSerializer):
                 'vehicle_name': obj.reel.vehicle.name,
                 'vehicle_year': obj.reel.vehicle.year,
                 'asking_price': str(obj.reel.vehicle.asking_price),
-                'video_file': video_url
+                'video_file': video_url,
+                'is_ai_generated': is_reel_ai_generated(obj.reel),
             }
         return None
 
