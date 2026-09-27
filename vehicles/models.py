@@ -98,7 +98,7 @@ import os
 import re
 
 AI_VIDEO_FILENAME_RE = re.compile(r'ai_gen_([a-f0-9\-]{36})', re.IGNORECASE)
-AI_TEMP_REEL_FILENAME_RE = re.compile(r'^vehicle_reel(_[a-zA-Z0-9]+)?\.mp4$', re.IGNORECASE)
+AI_TEMP_REEL_FILENAME_RE = re.compile(r'^vehicle_reel(_[a-zA-Z0-9]+)*\.mp4$', re.IGNORECASE)
 
 
 class DealerVehicleReel(models.Model):
