@@ -94,6 +94,13 @@ class Vehicle(models.Model):
     def __str__(self):
         return f"{self.name} {self.model} ({self.year})"
 
+import os
+import re
+
+AI_VIDEO_FILENAME_RE = re.compile(r'ai_gen_([a-f0-9\-]{36})', re.IGNORECASE)
+AI_TEMP_REEL_FILENAME_RE = re.compile(r'^vehicle_reel(_[a-zA-Z0-9]+)?\.mp4$', re.IGNORECASE)
+
+
 class DealerVehicleReel(models.Model):
     dealer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='reels')
     vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE, related_name='reels')
@@ -104,6 +111,15 @@ class DealerVehicleReel(models.Model):
     share_count = models.PositiveIntegerField(default=0)
     view_count = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        if self.ai_generation_id is not None:
+            self.is_ai_generated = True
+        elif not self.is_ai_generated and self.video_file:
+            filename = os.path.basename(getattr(self.video_file, 'name', '') or '')
+            if AI_VIDEO_FILENAME_RE.search(filename) or AI_TEMP_REEL_FILENAME_RE.match(filename):
+                self.is_ai_generated = True
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"Reel for {self.vehicle.name} by {self.dealer.email}"
