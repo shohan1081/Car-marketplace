@@ -61,9 +61,21 @@ def _detect_ai_generation_for_uploaded_video(video_file, dealer=None):
             pass
         return True, gen
 
-    # 2. Check byte size + SHA-256 content match against completed AIVideoGeneration files
+    # 2. Check if filename matches Flutter's downloaded AI temp filename (`vehicle_reel.mp4`)
+    if AI_TEMP_REEL_FILENAME_RE.match(filename):
+        gen = None
+        if dealer is not None and getattr(dealer, 'is_authenticated', False):
+            gen = (
+                AIVideoGeneration.objects.filter(dealer=dealer, status='completed', reels__isnull=True)
+                .order_by('-created_at')
+                .first()
+            )
+        return True, gen
+
+    # 3. Check byte size + SHA-256 content match against completed AIVideoGeneration files
+    # (AI generated videos are short ~8-15s clips under 50 MB; skip hashing huge raw camera uploads)
     uploaded_size = getattr(video_file, 'size', None)
-    if uploaded_size:
+    if uploaded_size and uploaded_size <= 50 * 1024 * 1024:
         qs = AIVideoGeneration.objects.filter(status='completed').exclude(generated_video='')
         if dealer is not None and getattr(dealer, 'is_authenticated', False):
             dealer_qs = list(qs.filter(dealer=dealer).order_by('-created_at'))
@@ -87,17 +99,6 @@ def _detect_ai_generation_for_uploaded_video(video_file, dealer=None):
                     return True, gen
             except Exception:
                 continue
-
-    # 3. Check if filename matches Flutter's downloaded AI temp filename (`vehicle_reel.mp4`)
-    if AI_TEMP_REEL_FILENAME_RE.match(filename):
-        gen = None
-        if dealer is not None and getattr(dealer, 'is_authenticated', False):
-            gen = (
-                AIVideoGeneration.objects.filter(dealer=dealer, status='completed', reels__isnull=True)
-                .order_by('-created_at')
-                .first()
-            )
-        return True, gen
 
     return False, None
 
