@@ -1215,6 +1215,69 @@
           }
         },
         {
+          "name": "Latest Reels Newsfeed",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (Array.isArray(jsonData) && jsonData.length > 0) {",
+                  "    pm.collectionVariables.set('reel_id', jsonData[0].id);",
+                  "    console.log('Set active reel_id: ' + jsonData[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "description": "Optional"
+              }
+            ],
+            "description": "Returns all published reels from verified dealers strictly ordered from newest to oldest (created_at DESC, id DESC) with the exact same response payload as /api/vehicles/newsfeed/. Also available at /api/vehicles/new-reels/ and /api/vehicles/reels/latest/.",
+            "url": "{{base_url}}/api/vehicles/newsfeed/latest/"
+          }
+        },
+        {
+          "name": "Public Newsfeed (Sorted by Latest)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "description": "Optional"
+              }
+            ],
+            "description": "Returns the main newsfeed sorted strictly from newest to oldest via the ?sort=latest query parameter.",
+            "url": {
+              "raw": "{{base_url}}/api/vehicles/newsfeed/?sort=latest",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "vehicles",
+                "newsfeed",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "sort",
+                  "value": "latest",
+                  "description": "Sort reels strictly by newest first"
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Search Vehicles",
           "request": {
             "method": "GET",
