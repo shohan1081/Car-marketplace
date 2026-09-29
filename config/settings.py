@@ -327,6 +327,13 @@ FILE_UPLOAD_MAX_MEMORY_SIZE = env.int('DJANGO_FILE_UPLOAD_MAX_MEMORY_SIZE', defa
 DATA_UPLOAD_MAX_MEMORY_SIZE = env.int('DJANGO_DATA_UPLOAD_MAX_MEMORY_SIZE', default=524288000)  # 500 MB
 DATA_UPLOAD_MAX_NUMBER_FILES = env.int('DJANGO_DATA_UPLOAD_MAX_NUMBER_FILES', default=100)
 
+# Store upload temp files inside MEDIA_ROOT so moving a large uploaded video to
+# media/reels/ is an instant O(1) atomic os.rename() on the same Docker volume
+# instead of a slow cross-device byte-by-byte copy from /tmp.
+_UPLOAD_TEMP_DIR = MEDIA_ROOT / '.tmp_uploads'
+_UPLOAD_TEMP_DIR.mkdir(parents=True, exist_ok=True)
+FILE_UPLOAD_TEMP_DIR = env('DJANGO_FILE_UPLOAD_TEMP_DIR', default=str(_UPLOAD_TEMP_DIR))
+
 # Re-encode uploaded videos in the background (ffmpeg) to 720p H.264 + faststart for smooth mobile playback.
 VIDEO_AUTO_OPTIMIZE = env.bool('VIDEO_AUTO_OPTIMIZE', default=True)
 VIDEO_OPTIMIZE_MAX_SHORT_SIDE = env.int('VIDEO_OPTIMIZE_MAX_SHORT_SIDE', default=720)
