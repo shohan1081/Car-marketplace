@@ -162,7 +162,7 @@ services:
   # nginx -- the only container exposed to the internet.
   # -------------------------------------------------------------------------
   nginx:
-    image: nginx:1.27-alpine
+    image: nginx:1.28-alpine   # 1.28 stable; `resolve` in nginx.conf needs >= 1.27.3
     restart: unless-stopped
     ports:
       - "80:80"
