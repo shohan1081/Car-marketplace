@@ -771,22 +771,31 @@ Only now, with HTTPS confirmed working:
 nano .env
 ```
 ```ini
-DJANGO_SECURE_SSL_REDIRECT=True
 DJANGO_SECURE_COOKIES=True
 DJANGO_CSRF_TRUSTED_ORIGINS=https://api.buysoloio.com
-DJANGO_SECURE_HSTS_SECONDS=3600
+DJANGO_SECURE_SSL_REDIRECT=False
+DJANGO_SECURE_HSTS_SECONDS=0
 ```
+
+Why the last two stay off:
+
+- **SSL redirect:** nginx already redirects every public `http://` request to
+  `https://`. Turning it on in Django as well adds nothing for users, and it
+  would redirect the AI agent's internal `http://web:8000` callback (the code
+  exempts that path, but there is no benefit to relying on it).
+- **HSTS:** `app.https.conf` already sends a one-year
+  `Strict-Transport-Security` header. Setting it in Django too would send the
+  header twice.
+
+`DJANGO_SECURE_COOKIES=True` is the one that matters: it stops the admin
+session and CSRF cookies from ever being sent over plain HTTP.
 
 ```bash
 docker compose up -d web ws
 ```
 
-Leave `HSTS` at `3600` (one hour) for a day. Once you are confident nothing is
-broken, raise it to `31536000` (one year) and restart again. HSTS is cached by
-browsers for its full duration and **cannot be revoked**, which is exactly why
-you raise it in stages.
-
-Finally, tighten `DJANGO_ALLOWED_HOSTS` by removing the raw Elastic IP:
+Finally, tighten `DJANGO_ALLOWED_HOSTS` by removing the raw Elastic IP if you
+added it:
 ```ini
 DJANGO_ALLOWED_HOSTS=api.buysoloio.com,web,ws,localhost,127.0.0.1
 ```
